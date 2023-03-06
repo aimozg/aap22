@@ -11,7 +11,9 @@ export class Player extends Creature {
 
 			hp: 20,
 			aim: 85,
+			damage: 10,
 			dodge: 10,
 		});
 	}
+	faction = "player";
 }

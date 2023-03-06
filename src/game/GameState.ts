@@ -11,6 +11,7 @@ import {XorWowRandom} from "../utils/math/XorWowRandom";
 import {Creature} from "./core/Creature";
 import {MonsterAI} from "./monster/MonsterAI";
 import {MonsterLib} from "./data/MonsterLib";
+import {Game} from "./Game";
 
 export let GameState = new class {
 
@@ -50,5 +51,7 @@ export let GameState = new class {
 				this.level.setTile(xy, Tiles.wall);
 			}
 		}
+
+		Game.screenManager.log("{1;Game started!} Use arrow keys or numpad to move. ");
 	}
 }

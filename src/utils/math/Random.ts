@@ -149,6 +149,11 @@ export abstract class Random {
 	roll(dice: Dice): number {
 		return this.dice(dice.rolls, dice.sides) + dice.bonus;
 	}
+	d100vs(chance: number): boolean {
+		if (chance <= 0) return false;
+		if (chance >= 100) return true;
+		return this.d100() <= chance;
+	}
 
 	/**
 	 * Generate a random permutation of numbers between from (inclusive) and to (inclusive)

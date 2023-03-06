@@ -11,4 +11,4 @@ LogManager.setLevels({
 });
 
 (window as any).Game = Game;
-Game.start(document.querySelector("main")!).then();
+Game.start().then();

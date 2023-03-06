@@ -10,6 +10,7 @@ export interface CreaturePrototype {
 
 	hp: number;
 	aim: number;
+	damage: number;
 	dodge: number;
 }
 
@@ -19,44 +20,54 @@ export class Creature extends MapObject {
 		...effects: EntityEffect<Creature>[]
 	) {
 		super();
-		this.name  = proto.name;
-		this.glyph = {
+		this.name   = proto.name;
+		this.color  = proto.color;
+		this.glyph  = {
 			ch: proto.ch,
 			// TODO blink if has special condition
-			fg: tinycolor(proto.color)
+			fg: tinycolor(this.color)
 		}
-		this.hp = proto.hp;
-		this.hpMax = proto.hp;
-		this.aim = proto.aim;
-		this.dodge = proto.dodge;
+		this.hp     = proto.hp;
+		this.hpMax  = proto.hp;
+		this.aim    = proto.aim;
+		this.damage = proto.damage;
+		this.dodge  = proto.dodge;
 
 		for (let effect of effects) {
 			effect.addTo(this);
 		}
 	}
 
-	z = MapObject.Z_CREATURE;
-	glyph: GlyphData;
 	name: string;
-	walkable = false;
+	color: string;
+	glyph: GlyphData;
+	z               = MapObject.Z_CREATURE;
+	walkable        = false;
+	faction: string = "monster";
 
 	//-------//
 	// STATS //
 	//-------//
 
-	ap = 0;
-	speed = 4;
-	hp = 1;
-	hpMax = 1;
-	aim = 0;
-	dodge = 0;
+	ap     = 0;
+	speed  = 4;
+	hp     = 1;
+	hpMax  = 1;
+	aim    = 0;
+	damage = 0;
+	dodge  = 0;
 
 	//---------//
 	// HELPERS //
 	//---------//
 
-	canAct():boolean {
+	canAct(): boolean {
 		return this.ap >= this.speed;
+	}
+
+	isHostileTo(other: Creature) {
+		if (other === this) return false;
+		return other.faction !== this.faction;
 	}
 }
 

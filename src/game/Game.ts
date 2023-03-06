@@ -20,21 +20,21 @@ export namespace Game {
 	export let inputManager: InputManager;
 	export const gameController = GameController;
 
-	export async function start(root:HTMLElement) {
+	export async function start() {
 		// TODO main menu
-		screenManager = new ScreenManager(root);
+		screenManager = new ScreenManager();
 		inputManager = new InputManager();
-		GameState.resetGame();
 		await GameController.setup();
 		await screenManager.setup();
 		await inputManager.setup();
-		// TODO run command loop
 
+		GameState.resetGame();
 		GameController.initLevel();
 		GameController.roundStart();
 		screenManager.beforeRender = ()=>{
 			GameController.update();
 		}
+		screenManager.resizeCanvas();
 	}
 
 

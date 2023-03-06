@@ -38,48 +38,61 @@ main {
   flex-grow: 1;
   display: grid;
   margin: 4px;
+  grid-template-columns: 1fr max(960px) 300px 1fr;
   grid-template-rows: 3em 1fr;
 }
 .top {
+  justify-self: stretch;
+  max-width: 960px;
+  white-space: pre-wrap;
+  grid-column: span 2;
+}
+.topstatus {
   text-align: center;
 }
-
-.text-0 {
+.divcanvas {
+}
+.text-error {
+  color: #000;
+  background: #F55;
+  display: inline-block;
+}
+.text-0, .text-normal {
   color: #AAA;
 }
-.text-1 {
+.text-1, .text-white {
   color: #FFF;
 }
-.text-2 {
+.text-2, .text-gray {
   color: #555;
 }
-.text-3 {
+.text-3, .text-red {
   color: #A00;
 }
-.text-4 {
+.text-4, .text-orange {
   color: #A50;
 }
-.text-5 {
+.text-5, .text-yellow {
   color: #AA0;
 }
-.text-6 {
+.text-6, .text-green {
   color: #0A0;
 }
-.text-7 {
+.text-7, .text-cyan {
   color: #0AA;
 }
-.text-8 {
+.text-8, .text-blue {
   color: #05A;
 }
-.text-9 {
+.text-9, .text-purple {
   color: #50A;
 }
-.text-a {
+.text-a, .text-magenta {
   color: #A0A;
 }
-.text-b {
+.text-b, .text-brown {
   color: #740;
 }
-.text-f {
+.text-f, .text-black {
   color: #000;
 }

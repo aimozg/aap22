@@ -13,6 +13,7 @@ export namespace MonsterLib {
 
 		hp: 10,
 		aim: 50,
+		damage: 5,
 		dodge: 0,
 	}
 }

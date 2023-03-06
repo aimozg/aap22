@@ -5,7 +5,7 @@
 export function createElement<K extends keyof HTMLElementTagNameMap>(
 	tagName: K,
 	props?: Record<string,any>,
-	content?: string|Node
+	content?: string|Node|(string|Node)[]
 ):HTMLElementTagNameMap[K] {
 	let e = document.createElement(tagName);
 	if (props) {
@@ -18,7 +18,11 @@ export function createElement<K extends keyof HTMLElementTagNameMap>(
 		}
 	}
 	if (content) {
-		e.append(content);
+		if (Array.isArray(content)) {
+			e.append(...content);
+		} else {
+			e.append(content);
+		}
 	}
 	return e;
 }
