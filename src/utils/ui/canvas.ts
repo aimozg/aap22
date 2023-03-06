@@ -7,6 +7,30 @@ import {lint} from "../math/utils";
 
 export type RGBColor = tinycolor.Instance;
 
+export let Colors = {
+	WHITE: '#FFF',
+	LIGHTGRAY: '#AAA',
+	DARKGRAY: '#555',
+	BLACK: '#000',
+	RED: '#A00',
+	ORANGE: '#A50',
+	YELLOW: '#AA0',
+	GREEN: '#0A0',
+	CYAN: '#0AA',
+	BLUE: '#05A',
+	PURPLE: '#50A',
+	MAGENTA: '#A0A',
+	LIGHTRED: '#F22',
+	LIGHTORANGE: '#F82',
+	LIGHTYELLOW: '#FF2',
+	LIGHTGREEN: '#2F2',
+	LIGHTCYAN: '#2FF',
+	LIGHTBLUE: '#28F',
+	LIGHTPURPLE: '#82F',
+	LIGHTMAGENTA: '#F2F',
+	BROWN: '#740'
+}
+
 export function createCanvas(w: number, h: number, fill?: string): CanvasRenderingContext2D {
 	let c = document.createElement("canvas");
 	c.width = w;

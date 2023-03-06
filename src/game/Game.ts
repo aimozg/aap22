@@ -29,6 +29,12 @@ export namespace Game {
 		await screenManager.setup();
 		await inputManager.setup();
 		// TODO run command loop
+
+		GameController.initLevel();
+		GameController.roundStart();
+		screenManager.beforeRender = ()=>{
+			GameController.update();
+		}
 	}
 
 

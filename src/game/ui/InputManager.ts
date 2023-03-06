@@ -5,15 +5,15 @@ import {KeyCodes} from "../../utils/ui/KeyCodes";
 import {GameController} from "../GameController";
 
 let hkActions = {
-	MoveUpLeft() { GameController.tryPlayerStep(-1,-1) },
-	MoveUp() { GameController.tryPlayerStep(0,-1) },
-	MoveUpRight() { GameController.tryPlayerStep(+1,-1) },
-	MoveLeft() { GameController.tryPlayerStep(-1,0) },
+	MoveUpLeft() { GameController.playerSmartAction(-1,-1) },
+	MoveUp() { GameController.playerSmartAction(0,-1) },
+	MoveUpRight() { GameController.playerSmartAction(+1,-1) },
+	MoveLeft() { GameController.playerSmartAction(-1,0) },
 	SkipTurn() { /* TODO skip turn */ },
-	MoveRight() { GameController.tryPlayerStep(+1,0) },
-	MoveDownLeft() { GameController.tryPlayerStep(-1,+1) },
-	MoveDown() { GameController.tryPlayerStep(0,+1) },
-	MoveDownRight() { GameController.tryPlayerStep(+1,+1) },
+	MoveRight() { GameController.playerSmartAction(+1,0) },
+	MoveDownLeft() { GameController.playerSmartAction(-1,+1) },
+	MoveDown() { GameController.playerSmartAction(0,+1) },
+	MoveDownRight() { GameController.playerSmartAction(+1,+1) },
 }
 
 let hotkeys:Record<string,()=>void> = {

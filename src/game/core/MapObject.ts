@@ -6,6 +6,7 @@ import {Entity} from "../Entity";
 import {XY} from "../../utils/geom";
 import {Level} from "./Level";
 import {GlyphData} from "../ui/GlyphLayer";
+import {objectClassName} from "../../utils/types";
 
 export abstract class MapObject extends Entity {
 	pos: XY = {x:0,y:0};
@@ -17,6 +18,9 @@ export abstract class MapObject extends Entity {
 	}
 	setPos(newPos: XY) {
 		this.parentEntity.moveObject(this, newPos);
+	}
+	toString() {
+		return `[${objectClassName(this)} ${this.name} (${this.pos.x};${this.pos.y})]`
 	}
 
 	abstract name: string;

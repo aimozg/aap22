@@ -10,82 +10,123 @@ import {createArray} from "../../utils/collections";
 import {Tile, Tiles} from "./Tile";
 import {coerce} from "../../utils/math/utils";
 import {Random} from "../../utils/math/Random";
+import {GlyphData} from "../ui/GlyphLayer";
+import {Creature} from "./Creature";
 
-function xy2id(xy:XY):number {
-	return (xy.y<<16)|xy.x;
+function xy2id(xy: XY): number {
+	return (xy.y << 16) | xy.x;
 }
 
-export interface Cell {
-	xy: XY;
-	tile: Tile;
-	mobjs: MapObject[];
+export class Cell {
+	constructor(
+		public readonly level: Level,
+		public readonly xy: XY
+	) {}
+
+	tile: Tile = Tiles.nothing;
+
+	placeObject(mobj: MapObject) {
+		this.level.addObject(mobj, this.xy);
+	}
+
+	get objects(): MapObject[] {
+		return this.level.objectsAt(this.xy);
+	}
+
+	get isEmpty(): boolean {
+		return this.tile.walk && !this.objects.some(mobj => !mobj.walkable);
+	}
+
+	get glyph(): GlyphData {
+		return this.objects.maxOn("z")?.glyph ?? this.tile;
+	}
 }
 
 export class Level extends Entity {
-	constructor(public readonly width:number,
-	            public readonly height:number) {
+	constructor(public readonly width: number,
+	            public readonly height: number) {
 		super();
 	}
-	// TODO store cells instead of objects+tiles
-	objects = new MultiMap<number, MapObject>()
-	tiles = createArray(this.width*this.height, ()=>Tiles.nothing)
-	xy2i(x:number, y:number):number {
-		return y*this.width + x;
+
+	mobjmap = new MultiMap<number, MapObject>()
+	cells   = createArray(this.width * this.height, (i) =>
+		new Cell(this, this.i2xy(i)));
+
+	i2xy(i: number): XY {
+		return {x: (i % this.width), y: (i / this.width) | 0};
 	}
-	contains(xy:XY):boolean {
+
+	xy2i(x: number, y: number): number {
+		return y * this.width + x;
+	}
+
+	//-----------//
+	// ACCESSORS //
+	//-----------//
+	objects(): MapObject[] {
+		return this.mobjmap.values();
+	}
+
+	creatures(): Creature[] {
+		return this.objects().filter((mobj): mobj is Creature => mobj instanceof Creature);
+	}
+
+	cellAt(xy: XY): Cell {
+		return this.cells[this.xy2i(xy.x, xy.y)];
+	}
+
+	tileAt(xy: XY): Tile {
+		return this.cellAt(xy).tile;
+	}
+
+	objectsAt(xy: XY): MapObject[] {
+		return this.mobjmap.get(xy2id(xy));
+	}
+
+	creatureAt(xy: XY): Creature | undefined {
+		return this.objectsAt(xy).find((mobj): mobj is Creature => mobj instanceof Creature);
+	}
+
+	isEmpty(xy: XY) {
+		return this.cellAt(xy).isEmpty;
+	}
+
+	contains(xy: XY): boolean {
 		return 0 <= xy.x && xy.x < this.width && 0 <= xy.y && xy.y < this.height;
 	}
 
-	addObject(obj:MapObject, pos:XY) {
+	//-----------//
+	// MODIFIERS //
+	//-----------//
+	addObject(obj: MapObject, pos: XY) {
 		obj.setParent(this);
 		obj.moved(pos);
-		this.objects.set(xy2id(pos), obj);
-	}
-	removeObject(obj:MapObject) {
-		this.objects.delete(xy2id(obj.pos), obj);
-		obj.removeParent();
-	}
-	moveObject(obj:MapObject, newPos:XY) {
-		let oldPos = obj.pos;
-		this.objects.delete(xy2id(oldPos), obj);
-		obj.moved(newPos);
-		this.objects.set(xy2id(newPos), obj);
+		this.mobjmap.set(xy2id(pos), obj);
 	}
 
-	objectsAt(xy:XY):MapObject[] {
-		return this.objects.get(xy2id(xy));
+	removeObject(obj: MapObject) {
+		this.mobjmap.delete(xy2id(obj.pos), obj);
+		obj.removeParent();
 	}
-	tileAt(xy:XY):Tile {
-		return this.tiles[this.xy2i(xy.x,xy.y)];
+
+	moveObject(obj: MapObject, newPos: XY) {
+		if (obj.parentEntity !== this) throw new Error(`Bad parent ${obj.parentEntity}`);
+		let oldPos = obj.pos;
+		this.mobjmap.delete(xy2id(oldPos), obj);
+		obj.moved(newPos);
+		this.mobjmap.set(xy2id(newPos), obj);
 	}
-	cellAt(xy:XY):Cell {
-		return {
-			xy,
-			tile: this.tileAt(xy),
-			mobjs: this.objectsAt(xy)
-		}
-	}
-	cells():Cell[] {
-		let result = [];
-		for (let y = 0; y < this.height; y++) {
-			for (let x = 0; x < this.width; x++) {
-				result.push(this.cellAt({x,y}));
-			}
-		}
-		return result;
-	}
-	isEmpty(pos: XY) {
-		return this.tileAt(pos).walk && !this.objectsAt(pos).some(mobj=>!mobj.walkable);
-	}
+
 
 	// Drawing utils
 
-	filteredCells(filter:(cell:Cell)=>boolean):Cell[] {
-		return this.cells().filter(cell=>filter(cell));
+	filteredCells(filter: (cell: Cell) => boolean): Cell[] {
+		return this.cells.filter(cell => filter(cell));
 	}
-	randomCell(rng:Random):XY;
-	randomCell(rng:Random, filter?:(cell:Cell)=>boolean):XY|undefined;
-	randomCell(rng:Random, filter?:(cell:Cell)=>boolean):XY|undefined {
+
+	randomCell(rng: Random): XY;
+	randomCell(rng: Random, filter?: (cell: Cell) => boolean): XY | undefined;
+	randomCell(rng: Random, filter?: (cell: Cell) => boolean): XY | undefined {
 		if (!filter) {
 			return {
 				x: rng.nextInt(this.width),
@@ -94,12 +135,13 @@ export class Level extends Entity {
 		}
 		return rng.pickOrUndefined(this.filteredCells(filter))?.xy;
 	}
-	randomEmptyCell(rng:Random):XY|undefined {
-		return this.randomCell(rng, cell=>this.isEmpty(cell.xy));
+
+	randomEmptyCell(rng: Random): XY | undefined {
+		return this.randomCell(rng, cell => this.isEmpty(cell.xy));
 	}
 
-	setTile(xy:XY, tile:Tile) {
-		this.tiles[this.xy2i(xy.x,xy.y)] = tile;
+	setTile(xy: XY, tile: Tile) {
+		this.cellAt(xy).tile = tile;
 	}
 
 	/**
@@ -107,16 +149,36 @@ export class Level extends Entity {
 	 * @param xy2 Bottom right cornet
 	 * @param tile Tile to fill with
 	 */
-	fillRect(xy1:XY, xy2:XY, tile:Tile) {
-		let x1 = coerce(xy1.x, 0, this.width-1);
-		let x2 = coerce(xy2.x, 0, this.width-1);
-		let y1 = coerce(xy1.y, 0, this.height-1);
-		let y2 = coerce(xy2.y, 0, this.height-1);
+	fillRect(xy1: XY, xy2: XY, tile: Tile) {
+		let x1 = coerce(xy1.x, 0, this.width - 1);
+		let x2 = coerce(xy2.x, 0, this.width - 1);
+		let y1 = coerce(xy1.y, 0, this.height - 1);
+		let y2 = coerce(xy2.y, 0, this.height - 1);
 		for (let y = y1; y <= y2; y++) {
-			let i  = this.xy2i(x1, y);
+			let i = this.xy2i(x1, y);
 			for (let x = x1; x <= x2; x++, i++) {
-				this.tiles[i] = tile;
+				this.cells[i].tile = tile;
 			}
+		}
+	}
+
+	/**
+	 * @param xy1 Top left corner
+	 * @param xy2 Bottom right cornet
+	 * @param tile Tile to draw with
+	 */
+	drawRect(xy1: XY, xy2: XY, tile: Tile) {
+		let x1 = coerce(xy1.x, 0, this.width - 1);
+		let x2 = coerce(xy2.x, 0, this.width - 1);
+		let y1 = coerce(xy1.y, 0, this.height - 1);
+		let y2 = coerce(xy2.y, 0, this.height - 1);
+		for (let y = y1; y <= y2; y++) {
+			this.setTile({x: x1, y}, tile);
+			this.setTile({x: x2, y}, tile);
+		}
+		for (let x = x1 + 1; x < x2; x++) {
+			this.setTile({x, y: y1}, tile);
+			this.setTile({x, y: y2}, tile);
 		}
 	}
 }

@@ -3,6 +3,12 @@
  */
 
 namespace Chars {
+	export const LINE_H               = "─";
+	export const LINE_V               = "│";
+	export const LINE_X               = "┼";
+	export const LINE_HH              = "═";
+	export const LINE_VV              = "║";
+	export const LINE_XX              = "╬";
 	export const LINE_LR              = "─";
 	export const LINE_UD              = "│";
 	export const LINE_DR              = "┌";
@@ -66,6 +72,7 @@ namespace Chars {
 	export const CIRCLE_BLACK         = "●";
 	export const INVERSE_CIRCLE_BLACK = "◘";
 	export const INVERSE_CIRCLE_WHITE = "◙";
+	export const BULLET               = "•";
 	export const BULLET_WHITE         = "◦";
 	export const SMILE_BLACK          = "☺";
 	export const SMILE_WHITE          = "☻";

@@ -2,6 +2,27 @@
  * Created by aimozg on 17.07.2022.
  */
 
+export function createElement<K extends keyof HTMLElementTagNameMap>(
+	tagName: K,
+	props?: Record<string,any>,
+	content?: string|Node
+):HTMLElementTagNameMap[K] {
+	let e = document.createElement(tagName);
+	if (props) {
+		for (let [k, v] of Object.entries(props)) {
+			if (k in e && typeof (e as any)[k] === "boolean") {
+				(e as any)[k] = v;
+			} else {
+				e.setAttribute(k, String(v));
+			}
+		}
+	}
+	if (content) {
+		e.append(content);
+	}
+	return e;
+}
+
 export function removeChildren(parent:Node|null|undefined):void {
 	if (!parent) return;
 	let c;
