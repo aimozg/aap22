@@ -18,7 +18,10 @@ import {Random} from "./Random";
  *
  */
 export class XorWowRandom extends Random {
-	static create(seed1:number=(Math.random()*(1<<31))|0, seed2:number=(Math.random()*(1<<31))|0):XorWowRandom {
+	static create(
+		seed1:number=(Math.random()*(1<<31))|0,
+		seed2:number=(Math.random()*(1<<31))|0
+	):XorWowRandom {
 		return new XorWowRandom(
 			seed1,
 			seed2,

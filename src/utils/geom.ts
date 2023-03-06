@@ -17,6 +17,12 @@ export namespace XY {
 	export function shift(xy:XY, dx:number, dy:number):XY {
 		return {x:xy.x+dx,y:xy.y+dy}
 	}
+	export function add(a:XY,b:XY):XY {
+		return {x:a.x+b.x,y:a.y+b.y};
+	}
+	export function subtract(a:XY,b:XY):XY {
+		return {x:a.x-b.x,y:a.y-b.y};
+	}
 }
 
 export interface XYRect {
@@ -48,7 +54,15 @@ export namespace XYRect {
 		return rect.left <= point.x && point.x <= rect.right &&
 			rect.top <= point.y && point.y <= rect.bottom;
 	}
-	export function fromCornerss(topLeft:XY, bottomRight:XY):XYRect {
+	export function fromWH(width:number, height:number, top:number=0, left:number=0):XYRect {
+		return {
+			left,
+			top,
+			right:left+width-1,
+			bottom:top+height-1
+		}
+	}
+	export function fromCorners(topLeft:XY, bottomRight:XY):XYRect {
 		return {
 			left:topLeft.x,
 			top:topLeft.y,

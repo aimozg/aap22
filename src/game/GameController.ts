@@ -12,6 +12,7 @@ import {Entity} from "./Entity";
 import {Game} from "./Game";
 import {DamageType, DamageTypes} from "./combat/DamageType";
 import {Corpse} from "./objects/Corpse";
+import {Tiles} from "./core/Tile";
 
 let logger = LogManager.loggerFor("game.GameController");
 
@@ -116,6 +117,11 @@ export let GameController = new class {
 			return false;
 		}
 
+		if (level.tileAt(pos2) === Tiles.door_closed) {
+			this.doOpenDoor(creature, pos2);
+			return true;
+		}
+
 		if (!level.isEmpty(pos2)) return false;
 		this.doStep(creature, pos2);
 		return true
@@ -128,6 +134,13 @@ export let GameController = new class {
 	doSkip(creature:Creature) {
 		logger.info("doSkip {}", creature);
 		creature.ap = 0;
+	}
+	doOpenDoor(actor:Creature, pos:XY) {
+		logger.info("doOpenDoor {} {}",actor,pos);
+		let level = actor.parentEntity!;
+		let cell = level.cellAt(pos);
+		if (cell.tile !== Tiles.door_closed) throw new Error(`No door at ${pos.x};${pos.y}!`);
+		cell.tile = Tiles.door_open;
 	}
 	doMeleeAttack(actor:Creature, target:Creature) {
 		logger.info("doMeleeAttack {} {}", actor, target);

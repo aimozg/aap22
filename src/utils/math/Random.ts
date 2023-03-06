@@ -183,8 +183,14 @@ export abstract class Random {
 	pick<E>(source:E[]):E;
 	pick<T extends ArrayLike<E>, E>(source:T):E {
 		if (source.length === 0) throw new Error("Cannot pick from empty list");
-		if (source.length === 1) return source[0];
 		return source[this.nextInt(source.length)];
+	}
+	randpop<E>(source:E[]):E {
+		if (source.length === 0) throw new Error("Cannot pick from empty list");
+		let i = this.nextInt(source.length);
+		let x = source[i];
+		source.splice(i, 1);
+		return x;
 	}
 	either<E>(...options:E[]):E {
 		return this.pick(options);
@@ -206,12 +212,11 @@ export abstract class Random {
 		if (source.length === 0) return null;
 		// Single-pass weighted random
 		// At each iteration i:
-		// - if Z <= w(i) / S(i), pick x_i
-		// - if Z >  w(i) / S(i), pick unchanged
-		// where Z is random(0..1), w(i) is weight of x_i,
+		// - if Zi <= w(i) / S(i), pick x_i
+		// - if Zi >  w(i) / S(i), pick unchanged
+		// where Zi is random(0..1), w(i) is weight of x_i,
 		// S(i) = w(1) + w(2) + ... + w(i) = partial sum
 		let pick:E|null = null;
-		let z = this.nextFloat();
 		let sum = 0;
 		for (let e of source) {
 			let w = weightFn(e);
@@ -219,6 +224,7 @@ export abstract class Random {
 			if (w <= 0) continue;
 			if (isNaN(w)) throw new Error("Invalid weighted random element");
 			sum += w;
+			let z = this.nextFloat();
 			if (z <= w/sum) pick = e;
 		}
 		return pick;

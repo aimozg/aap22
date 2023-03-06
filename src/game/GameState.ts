@@ -4,7 +4,6 @@
 
 
 import {Level} from "./core/Level";
-import {Tiles} from "./core/Tile";
 import {Player} from "./core/Player";
 import {Random} from "../utils/math/Random";
 import {XorWowRandom} from "../utils/math/XorWowRandom";
@@ -12,9 +11,12 @@ import {Creature} from "./core/Creature";
 import {MonsterAI} from "./monster/MonsterAI";
 import {MonsterLib} from "./data/MonsterLib";
 import {Game} from "./Game";
+import {ChunkMapGen} from "./mapgen/ChunkMapGen";
+import {dungeonChunks} from "./mapgen/dungeonChunks";
 
 export let GameState = new class {
 
+	seed: number;
 	level: Level;
 	player: Player;
 	rng: Random;
@@ -26,16 +28,21 @@ export let GameState = new class {
 
 	get mapHeight() { return this.level.height }
 
-	resetGame() {
-		this.rng = XorWowRandom.create();
-		this.maprng = XorWowRandom.create();
+	resetGame(seed?:number) {
+		seed ??= (Math.random()*1_000_000|0);
+		this.seed = seed;
+		this.rng = XorWowRandom.create(seed,0);
+		this.maprng = XorWowRandom.create(this.rng.nextInt(),this.rng.nextInt());
 
 		this.roundNo = 1;
 		this.tickNo = 0;
 
-		this.level  = new Level(40, 40);
-		this.level.fillRect({x: 0, y: 0}, {x: this.level.width, y: this.level.height}, Tiles.floor);
-		this.level.drawRect({x: 0, y: 0}, {x: this.level.width, y: this.level.height}, Tiles.wall);
+		this.level  = ChunkMapGen.generateLevel(
+			this.maprng,
+			40,
+			40,
+			dungeonChunks
+		);
 
 		this.player = new Player();
 		this.level.addObject(this.player, this.level.randomEmptyCell(this.maprng)!);
@@ -44,13 +51,6 @@ export let GameState = new class {
 			new Creature(MonsterLib.Zombie, new MonsterAI()),
 			this.level.randomEmptyCell(this.maprng)!
 		);
-
-		for (let i = 0; i < 10 + this.maprng.nextInt(10); i++) {
-			let xy = this.level.randomCell(this.maprng);
-			if (this.level.isEmpty(xy)) {
-				this.level.setTile(xy, Tiles.wall);
-			}
-		}
 
 		Game.screenManager.log("{1;Game started!} Use arrow keys or numpad to move. ");
 	}

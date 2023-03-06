@@ -156,6 +156,8 @@ export class ScreenManager {
 		let status = "";
 		status += repeatString(Chars.LINE_HH, 10);
 		status += " ";
+		status += " SEED: "+String(GameState.seed).padEnd(6,' ');
+		status += " AP: ";
 		for (let x = 1; x <= player.speed; x++) {
 			status += (player.ap >= x) ? Chars.CIRCLE_BLACK : Chars.CIRCLE_WHITE;
 		}

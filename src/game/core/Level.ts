@@ -12,6 +12,7 @@ import {coerce} from "../../utils/math/utils";
 import {Random} from "../../utils/math/Random";
 import {GlyphData} from "../ui/GlyphLayer";
 import {Creature} from "./Creature";
+import {Dir8List, xyPlusDir} from "../../utils/grid";
 
 function xy2id(xy: XY): number {
 	return (xy.y << 16) | xy.x;
@@ -117,8 +118,9 @@ export class Level extends Entity {
 		this.mobjmap.set(xy2id(newPos), obj);
 	}
 
-
-	// Drawing utils
+	//---------------//
+	// DRAWING UTILS //
+	//---------------//
 
 	filteredCells(filter: (cell: Cell) => boolean): Cell[] {
 		return this.cells.filter(cell => filter(cell));
@@ -142,6 +144,18 @@ export class Level extends Entity {
 
 	setTile(xy: XY, tile: Tile) {
 		this.cellAt(xy).tile = tile;
+	}
+
+	/**
+	 * Number of neighbour cells of specific tile type
+	 */
+	count8(xy:XY, tile:Tile):number {
+		let n = 0;
+		for (let dir of Dir8List) {
+			let nxy = xyPlusDir(xy, dir);
+			if (this.contains(nxy) && this.tileAt(nxy) === tile) n++;
+		}
+		return n;
 	}
 
 	/**
