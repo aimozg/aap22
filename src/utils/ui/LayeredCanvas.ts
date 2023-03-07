@@ -176,22 +176,22 @@ export class LayeredCanvas {
 		)
 	}
 	isPointVisible(xy:XY):boolean {
-		return XYRect.includess(this.visibleRect(), xy);
+		return XYRect.includes(this.visibleRect(), xy);
 	}
 	isRectVisible(rect:XYRect):boolean {
 		let vr = this.visibleRect();
-		return XYRect.includess(vr, XYRect.topLeft(rect)) &&
-			XYRect.includess(vr, XYRect.bottomRight(rect));
+		return XYRect.includes(vr, XYRect.topLeft(rect)) &&
+			XYRect.includes(vr, XYRect.bottomRight(rect));
 	}
 	fitToShow(rect:XYRect, canZoomOut:boolean=true, canZoomIn:boolean=true):void {
-		let scaleX = this.viewportWidth / XYRect.width(rect);
-		let scaleY = this.viewportHeight / XYRect.height(rect);
+		let scaleX = this.viewportWidth / XYRect.fwidth(rect);
+		let scaleY = this.viewportHeight / XYRect.fheight(rect);
 		let zf = Math.min(scaleX, scaleY);
 		if (zf < this.zoomFactor && canZoomOut ||
 			zf > this.zoomFactor && canZoomIn) {
 			this.setZoomFactor(zf);
 		}
-		this.setCenter(XYRect.center(rect));
+		this.setCenter(XYRect.fcenter(rect));
 	}
 	zoomOutToShow(rect:XYRect, padding:number = 0):void {
 		if (padding) rect = XYRect.expand(rect, padding);

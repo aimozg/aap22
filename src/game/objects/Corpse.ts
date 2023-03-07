@@ -13,7 +13,7 @@ export class Corpse extends MapObject {
 	) {
 		super();
 		this.glyph = {
-			ch: 'ξ',
+			ch: '⁔',
 			fg: tinycolor(color)
 		};
 	}

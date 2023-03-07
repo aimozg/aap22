@@ -41,7 +41,12 @@ export let GameController = new class {
 		for (let creature of GameState.level.creatures()) {
 			if (creature.canAct()) {
 				if (creature instanceof Player) {
-					this.playerCanAct = true;
+					let queuedAction = this.playerActionQueue.shift();
+					if (queuedAction) {
+						queuedAction();
+					} else {
+						this.playerCanAct = true;
+					}
 				} else {
 					this.doAI(creature);
 				}
@@ -199,10 +204,18 @@ export let GameController = new class {
 	//-------//
 	// INPUT //
 	//-------//
+	playerActionQueue:(()=>void)[] = [];
+	queuePlayerAction(action:()=>void) {
+		if (!this.playerCanAct) {
+			this.playerActionQueue.push(action);
+		} else {
+			action();
+		}
+	}
 
-	playerSmartAction(dx: number, dy: number):boolean {
+	playerSmartAction(dx: number, dy: number) {
 		logger.debug("playerSmartAction {} {}", dx, dy);
-		if (!this.playerCanAct) return false;
-		return this.smartAction(GameState.player, dx, dy);
+		this.queuePlayerAction(()=>this.smartAction(GameState.player, dx, dy));
+
 	}
 }

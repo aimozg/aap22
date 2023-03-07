@@ -151,11 +151,11 @@ export let dungeonChunks = new ChunkSet([{
 	type: "corridor"
 }, {
 	layout: `
-	#*##___
-	##.##__
-	_##.##_
-	__##.##
-	___##*#`,
+	#*##__
+	#..##_
+	##..##
+	_##..#
+	__##*#`,
 	type: "corridor",
 	chance: 0.5
 }, {

@@ -2,7 +2,7 @@
  * Created by aimozg on 06.03.2023.
  */
 
-import {Level} from "../core/Level";
+import {Level, Room} from "../core/Level";
 import {Tile, Tiles} from "../core/Tile";
 import {Side, sideCoords, SideID, SideList, xyPlusDir} from "../../utils/grid";
 import {XY, XYRect} from "../../utils/geom";
@@ -123,8 +123,6 @@ function joinWeight(t1:ChunkType, t2:ChunkType):number {
 
 export namespace ChunkMapGen {
 
-
-
 	export function generateLevel(
 		rng: Random,
 		width: number,
@@ -134,19 +132,29 @@ export namespace ChunkMapGen {
 		let level = new Level(width,height);
 		let busymap = new Int8Array(width*height);
 		const ttNothing = Tiles.nothing;
-		let exits = [] as {xy:XY,side:Side,type:ChunkType}[];
-		let badExits:XY[] = [];
+		type Exit = {xy:XY,side:Side,type:ChunkType};
+		let exits:Exit[] = [];
+		let badExits:Exit[] = [];
 		let fluid = rng.either(Tiles.water, Tiles.lava);
 		function placeChunk(chunk:Chunk,x0:number,y0:number) {
+			if (chunk.type === "room") {
+				level.rooms.push(
+					new Room(level,
+						{x: x0+chunk.rect.x1, y: y0+chunk.rect.y1},
+						{x: x0+chunk.rect.x2, y: y0+chunk.rect.y2}
+					)
+				);
+			}
 			// Add exits to the queue
 			for (let side of SideList) {
 				for (let exit of chunk.exits[side.id]) {
 					let xy      = XY.shift(exit,x0,y0);
 					if (level.contains(xy)) {
+						let exit = {xy, side, type: chunk.type};
 						if (level.tileAt(xy) === ttNothing) {
-							exits.push({xy, side, type: chunk.type});
+							exits.push(exit);
 						} else {
-							badExits.push(xy);
+							badExits.push(exit);
 						}
 					}
 				}
@@ -185,7 +193,7 @@ export namespace ChunkMapGen {
 			return true;
 		}
 
-		let initialChunk = rng.pick(library.chunks);
+		let initialChunk = rng.pick(library.chunks.filter(c=>c.type==="room"));
 		let ix0 = (width+initialChunk.width)/2|0;
 		let iy0 = (height+initialChunk.height)/2|0;
 		while (ix0+initialChunk.width >= width) ix0--;
@@ -213,15 +221,19 @@ export namespace ChunkMapGen {
 				}
 			}
 			if (fail) {
-				badExits.push(exit.xy);
+				badExits.push(exit);
 			}
 		}
-		for (let xy of badExits) {
+		for (let exit of badExits) {
 			// Failed to place the chunk = fill the exit tile with wall
-			let {x,y} = xy;
-			if (x === 0 || y === 0 || x === width-1 || y === height-1 ||
-				level.count8(xy, ttNothing)>0) {
-				level.setTile(xy, Tiles.wall);
+			let nextxy = xyPlusDir(exit.xy, exit.side.id);
+			let nexttile = level.tileAt(nextxy);
+			if (nexttile === ttNothing || level.count8(exit.xy, ttNothing)>0) {
+				level.setTile(exit.xy, Tiles.wall);
+			} else if (level.tileAt(exit.xy) === Tiles.door_closed) {
+				if (nexttile === Tiles.wall) {
+					level.setTile(exit.xy, Tiles.wall);
+				}
 			}
 		}
 

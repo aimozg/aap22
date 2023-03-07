@@ -5,7 +5,7 @@
 import {Entity} from "../Entity";
 import {MultiMap} from "../../utils/MultiMap";
 import {MapObject} from "./MapObject";
-import {XY} from "../../utils/geom";
+import {XY, XYRect} from "../../utils/geom";
 import {createArray} from "../../utils/collections";
 import {Tile, Tiles} from "./Tile";
 import {coerce} from "../../utils/math/utils";
@@ -43,6 +43,37 @@ export class Cell {
 	}
 }
 
+export class Room implements XYRect {
+	constructor(
+		public readonly level: Level,
+		public readonly topLeft: XY,
+		public readonly bottomRight: XY
+	) {}
+
+	toString() {
+		return `[Room (${this.x1};${this.y1};${this.x2};${this.y2})]`
+	}
+
+	get x1(): number { return this.topLeft.x }
+	get y1(): number { return this.topLeft.y }
+	get x2(): number { return this.bottomRight.x }
+	get y2(): number { return this.bottomRight.y }
+
+	cells():Cell[] {
+		return XYRect.cells(this).map(xy=>this.level.cellAt(xy));
+	}
+	cellAtLocal(xy:XY):Cell {
+		return this.level.cellAt(XY.add(xy, this.topLeft));
+	}
+	randomEmptyCell(rng:Random):Cell|undefined {
+		return rng.pickOrUndefined(this.cells().filter(c=>c.isEmpty));
+	}
+
+	center():XY {
+		return XYRect.icenter(this);
+	}
+}
+
 export class Level extends Entity {
 	constructor(public readonly width: number,
 	            public readonly height: number) {
@@ -52,6 +83,7 @@ export class Level extends Entity {
 	mobjmap = new MultiMap<number, MapObject>()
 	cells   = createArray(this.width * this.height, (i) =>
 		new Cell(this, this.i2xy(i)));
+	rooms: Room[] = [];
 
 	i2xy(i: number): XY {
 		return {x: (i % this.width), y: (i / this.width) | 0};
@@ -77,6 +109,7 @@ export class Level extends Entity {
 	}
 
 	tileAt(xy: XY): Tile {
+		if (!this.contains(xy)) return Tiles.nothing;
 		return this.cellAt(xy).tile;
 	}
 

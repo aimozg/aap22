@@ -133,10 +133,10 @@ export class ScreenManager {
 	resizeCanvas() {
 		this.mainCanvas.stretchToParentSize();
 		this.mainCanvas.fitToShow({
-			left: 0,
-			right: CELLWIDTH*GameState.level.width,
-			top: 0,
-			bottom: CELLHEIGHT*GameState.level.height
+			x1: 0,
+			x2: CELLWIDTH*GameState.level.width,
+			y1: 0,
+			y2: CELLHEIGHT*GameState.level.height
 		});
 	}
 	private render() {

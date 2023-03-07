@@ -26,66 +26,79 @@ export namespace XY {
 }
 
 export interface XYRect {
-	top: number;
-	left: number;
-	right: number;
-	bottom: number;
+	x1: number;
+	y1: number;
+	x2: number;
+	y2: number;
 }
 export namespace XYRect {
-	export function width(rect:XYRect):number {
-		return rect.right - rect.left;
+	export function fwidth(rect:XYRect):number {
+		return rect.x2 - rect.x1;
 	}
-	export function height(rect:XYRect):number {
-		return rect.bottom - rect.top;
+	export function fheight(rect:XYRect):number {
+		return rect.y2 - rect.y1;
 	}
-	export function center(rect:XYRect):XY {
+	export function fcenter(rect:XYRect):XY {
 		return {
-			x: (rect.left + rect.right) / 2,
-			y: (rect.top + rect.bottom) / 2
+			x: (rect.x1 + rect.x2) / 2,
+			y: (rect.y1 + rect.y2) / 2
 		}
 	}
+	export function icenter(rect:XYRect):XY {
+		let c = fcenter(rect);
+		c.x|=0;
+		c.y|=0;
+		return c;
+	}
 	export function topLeft(rect:XYRect):XY {
-		return {x:rect.left,y:rect.top}
+		return {x:rect.x1,y:rect.y1}
 	}
 	export function bottomRight(rect:XYRect):XY {
-		return {x:rect.right,y:rect.bottom}
+		return {x:rect.x2,y:rect.y2}
 	}
-	export function includess(rect:XYRect, point:XY):boolean {
-		return rect.left <= point.x && point.x <= rect.right &&
-			rect.top <= point.y && point.y <= rect.bottom;
+	export function includes(rect:XYRect, point:XY):boolean {
+		return rect.x1 <= point.x && point.x <= rect.x2 &&
+			rect.y1 <= point.y && point.y <= rect.y2;
+	}
+	export function cells(rect:XYRect):XY[] {
+		let result:XY[] = [];
+		for (let y = rect.y1; y <= rect.y2; y++)
+			for (let x = rect.x1; x <= rect.x2; x++)
+				result.push({x,y});
+		return result;
 	}
 	export function fromWH(width:number, height:number, top:number=0, left:number=0):XYRect {
 		return {
-			left,
-			top,
-			right:left+width-1,
-			bottom:top+height-1
+			x1: left,
+			y1: top,
+			x2:left+width-1,
+			y2:top+height-1
 		}
 	}
 	export function fromCorners(topLeft:XY, bottomRight:XY):XYRect {
 		return {
-			left:topLeft.x,
-			top:topLeft.y,
-			right:bottomRight.x,
-			bottom:bottomRight.y,
+			x1:topLeft.x,
+			y1:topLeft.y,
+			x2:bottomRight.x,
+			y2:bottomRight.y,
 		}
 	}
 	export function fromCenter(center:XY, width:number, height:number):XYRect {
 		width /= 2;
 		height /= 2;
 		return {
-			left: center.x - width,
-			right: center.x + width,
-			top: center.y - height,
-			bottom: center.y - height
+			x1: center.x - width,
+			x2: center.x + width,
+			y1: center.y - height,
+			y2: center.y - height
 		}
 	}
 	export function expand(base:XYRect, dx:number, dy:number=dx):XYRect {
 		return {
-			left: base.left-dx,
-			right:base.right+dx,
-			top:base.left-dy,
-			bottom:base.bottom+dy
+			x1: base.x1-dx,
+			x2:base.x2+dx,
+			y1:base.x1-dy,
+			y2:base.y2+dy
 		}
 	}
 }

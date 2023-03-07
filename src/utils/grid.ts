@@ -52,10 +52,10 @@ export let SideList = Object.freeze(Object.values(Sides));
 
 export function sideCoords(side:Side|SideID, rect:XYRect):XY[] {
 	if (typeof side === "string") side = Sides[side];
-	let x = side.x0 ? rect.right : rect.left;
-	let y = side.y0 ? rect.bottom : rect.top;
+	let x = side.x0 ? rect.x2 : rect.x1;
+	let y = side.y0 ? rect.y2 : rect.y1;
 	let result:XY[] = [];
-	while (x <= rect.right && y <= rect.bottom) {
+	while (x <= rect.x2 && y <= rect.y2) {
 		result.push({x,y});
 		x += side.dx;
 		y += side.dy;

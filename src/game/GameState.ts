@@ -13,6 +13,10 @@ import {MonsterLib} from "./data/MonsterLib";
 import {Game} from "./Game";
 import {ChunkMapGen} from "./mapgen/ChunkMapGen";
 import {dungeonChunks} from "./mapgen/dungeonChunks";
+import {LevelExit} from "./objects/LevelExit";
+import {LogManager} from "../utils/logging/LogManager";
+
+let logger = LogManager.loggerFor("GameState");
 
 export let GameState = new class {
 
@@ -30,6 +34,7 @@ export let GameState = new class {
 
 	resetGame(seed?:number) {
 		seed ??= (Math.random()*1_000_000|0);
+		logger.info("World seed {}", seed);
 		this.seed = seed;
 		this.rng = XorWowRandom.create(seed,0);
 		this.maprng = XorWowRandom.create(this.rng.nextInt(),this.rng.nextInt());
@@ -37,20 +42,36 @@ export let GameState = new class {
 		this.roundNo = 1;
 		this.tickNo = 0;
 
-		this.level  = ChunkMapGen.generateLevel(
-			this.maprng,
-			40,
-			40,
-			dungeonChunks
-		);
-
+		while (true) {
+			this.level = ChunkMapGen.generateLevel(
+				this.maprng,
+				40,
+				40,
+				dungeonChunks
+			);
+			if (this.level.rooms.length > 5) break;
+		}
+		let rooms = this.level.rooms.slice();
+		let pcroom = this.maprng.randpop(rooms);
 		this.player = new Player();
-		this.level.addObject(this.player, this.level.randomEmptyCell(this.maprng)!);
+		this.level.addObject(this.player, pcroom.randomEmptyCell(this.maprng)!.xy);
 
-		this.level.addObject(
-			new Creature(MonsterLib.Zombie, new MonsterAI()),
-			this.level.randomEmptyCell(this.maprng)!
-		);
+		let exitroom = this.maprng.pick(rooms);
+		let exitcell = this.level.cellAt(exitroom.center());
+		if (!exitcell.isEmpty) exitcell = exitroom.randomEmptyCell(this.maprng)!;
+		this.level.addObject(new LevelExit(), exitcell.xy);
+
+		for (let room of rooms) {
+			let cell = room.randomEmptyCell(this.maprng);
+			if (!cell) {
+				logger.warn("No empty cells in room {}",room);
+			} else {
+				this.level.addObject(
+					new Creature(MonsterLib.Zombie, new MonsterAI()),
+					cell!.xy
+				);
+			}
+		}
 
 		Game.screenManager.log("{1;Game started!} Use arrow keys or numpad to move. ");
 	}
