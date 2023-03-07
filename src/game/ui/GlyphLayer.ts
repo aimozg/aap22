@@ -16,7 +16,7 @@ export interface GlyphSource {
 	width: number;
 	height: number;
 
-	glyphAt(x: number, y: number): GlyphData | null;
+	glyphAt(x: number, y: number): GlyphData | null | undefined;
 }
 
 export class GlyphLayer extends AbstractCanvasLayer {

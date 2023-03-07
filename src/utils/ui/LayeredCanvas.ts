@@ -353,4 +353,4 @@ export class LayeredCanvas {
 	}
 }
 
-const logger = LogManager.loggerFor("engine.ui.utils.LayeredCanvas")
+const logger = LogManager.loggerFor("LayeredCanvas")

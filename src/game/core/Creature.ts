@@ -2,12 +2,20 @@ import {MapObject} from "./MapObject";
 import {GlyphData} from "../ui/GlyphLayer";
 import * as tinycolor from "tinycolor2";
 import {EntityEffect} from "../Entity";
+import {coerce} from "../../utils/math/utils";
+
+export type CreatureTag =
+	"player"|"boss"|
+	"undead"|"beast"|"demon"|"construct"|"humanoid"|
+	"bones";
 
 export interface CreaturePrototype {
 	name: string;
 	ch: string;
 	color: string;
+	tags?: CreatureTag[];
 
+	speed: number;
 	hp: number;
 	aim: number;
 	damage: number;
@@ -27,11 +35,13 @@ export class Creature extends MapObject {
 			// TODO blink if has special condition
 			fg: tinycolor(this.color)
 		}
+		this.tags = new Set(proto.tags);
 		this.hp     = proto.hp;
 		this.hpMax  = proto.hp;
 		this.aim    = proto.aim;
 		this.damage = proto.damage;
 		this.dodge  = proto.dodge;
+		this.speed  = proto.speed;
 
 		for (let effect of effects) {
 			effect.addTo(this);
@@ -44,25 +54,29 @@ export class Creature extends MapObject {
 	z               = MapObject.Z_CREATURE;
 	walkable        = false;
 	faction: string = "monster";
+	tags: Set<CreatureTag>;
 
 	//-------//
 	// STATS //
 	//-------//
 
-	ap     = 0;
-	speed  = 4;
-	hp     = 1;
-	hpMax  = 1;
-	aim    = 0;
-	damage = 0;
-	dodge  = 0;
+	ap: number = 0;
+	speed: number;
+	hp: number;
+	hpMax: number;
+	aim: number;
+	damage: number;
+	dodge: number;
 
 	//---------//
 	// HELPERS //
 	//---------//
 
+	get apPerAction():number {
+		return coerce(1, 8-this.speed, 8);
+	}
 	canAct(): boolean {
-		return this.ap >= this.speed;
+		return this.ap >= this.apPerAction;
 	}
 
 	isHostileTo(other: Creature) {

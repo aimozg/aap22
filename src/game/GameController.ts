@@ -13,8 +13,9 @@ import {Game} from "./Game";
 import {DamageType, DamageTypes} from "./combat/DamageType";
 import {Corpse} from "./objects/Corpse";
 import {Tiles} from "./core/Tile";
+import {MapObject} from "./core/MapObject";
 
-let logger = LogManager.loggerFor("game.GameController");
+let logger = LogManager.loggerFor("GameController");
 
 export let GameController = new class {
 
@@ -32,25 +33,32 @@ export let GameController = new class {
 
 	initLevel() {
 		for (let creature of GameState.level.creatures()) {
-			creature.ap = creature.speed;
+			creature.ap = creature.apPerAction;
 		}
 	}
 
 	update() {
 		this.playerCanAct = false;
-		for (let creature of GameState.level.creatures()) {
-			if (creature.canAct()) {
-				if (creature instanceof Player) {
-					let queuedAction = this.playerActionQueue.shift();
-					if (queuedAction) {
-						queuedAction();
+		// TODO should do async with fx...
+		let loop = true;
+		while (loop) {
+			loop = false;
+			for (let creature of GameState.level.creatures()) {
+				if (creature.canAct()) {
+					if (creature instanceof Player) {
+						let queuedAction = this.playerActionQueue.shift();
+						if (queuedAction) {
+							queuedAction();
+						} else {
+							this.playerCanAct = true;
+							return;
+						}
 					} else {
-						this.playerCanAct = true;
+						this.doAI(creature);
+						loop = true;
 					}
-				} else {
-					this.doAI(creature);
+					break;
 				}
-				return;
 			}
 		}
 		this.nextTick();
@@ -166,7 +174,7 @@ export let GameController = new class {
 			this.log("{a} miss{a.es} {b}. ", {a:actor, b:target});
 		}
 	}
-	doDamage(target:Creature, damage:number, damageType:DamageType, source:Entity|null) {
+	doDamage(target:Creature, damage:number, damageType:DamageType, source:MapObject|null) {
 		logger.info("doDamage {} {} {} {}", target, damage, damageType.name, source);
 		damage |= 0;
 		// TODO adjust damage - resistances
@@ -183,12 +191,19 @@ export let GameController = new class {
 		if (damage <= 0) {
 			return;
 		}
+		for (let n = 0; n < damage*2; n++) {
+			let direction:XY = {x:0,y:-1};
+			if (source) {
+				direction = XY.subtract(target.pos,source.pos);
+			}
+			Game.screenManager.shootParticleFrom(target.pos, direction, "blood");
+		}
 		target.hp -= damage;
 		if (target.hp <= 0) {
 			this.doKill(target, source);
 		}
 	}
-	doKill(target:Creature, source:Entity|null) {
+	doKill(target:Creature, source:MapObject|null) {
 		logger.info("doKill {} {}",target,source);
 		let pos          = target.pos;
 		let level = target.parentEntity;

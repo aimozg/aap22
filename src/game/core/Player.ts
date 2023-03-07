@@ -8,7 +8,9 @@ export class Player extends Creature {
 			name: "Hero",
 			ch: Chars.SMILE_BLACK,
 			color: Colors.LIGHTYELLOW,
+			tags: ["player"],
 
+			speed: 4,
 			hp: 20,
 			aim: 85,
 			damage: 10,

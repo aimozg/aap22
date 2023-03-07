@@ -39,7 +39,11 @@ export class Cell {
 	}
 
 	get glyph(): GlyphData {
-		return this.objects.maxOn("z")?.glyph ?? this.tile;
+		return this.topMobj()?.glyph ?? this.tile;
+	}
+
+	topMobj(): MapObject | undefined {
+		return this.objects.maxOn("z");
 	}
 }
 

@@ -11,6 +11,12 @@ import {Entity} from "../Entity";
 import {Creature} from "../core/Creature";
 import {objectClassName} from "../../utils/types";
 import jsx from "texsaur";
+import {ParticleDef, ParticleLayer} from "./ParticleLayer";
+import {Colors} from "../../utils/ui/canvas";
+import {XY} from "../../utils/geom";
+import {Game} from "../Game";
+import {DecalLayer} from "./DecalLayer";
+import {Tiles} from "../core/Tile";
 
 export let FONTFACE = "IBMBIOS";
 export let FONTSIZE = "32px";
@@ -70,6 +76,9 @@ export class ScreenManager {
 	private topStatus: Element;
 	private topLog: Element;
 	private mainCanvas:LayeredCanvas;
+	particleLayer: ParticleLayer;
+	decalLayer: DecalLayer;
+	private sideStatus: Element;
 
 	async setup() {
 		this.mainCanvas = new LayeredCanvas({
@@ -88,7 +97,9 @@ export class ScreenManager {
 			<div class="divcanvas">
 				{this.mainCanvas.element}
 			</div>
-			<div class="sidebar"></div>
+			<div class="sidebar">
+				{this.sideStatus=<div class="sidestatus"></div>}
+			</div>
 			<div></div>
 		</main>);
 
@@ -108,46 +119,142 @@ export class ScreenManager {
 			 */
 		}
 
-		// Create layers
-		let mobjLayerData:GlyphSource = {
-			get width() { return GameState.mapWidth },
-			get height() { return GameState.mapHeight },
-			glyphAt(x: number, y: number){
-				return GameState.level.cellAt({x,y}).glyph;
-			}
-		};
-		let mobjLayer = new GlyphLayer("tiles", mobjLayerData, FONT, CELLWIDTH, CELLHEIGHT);
 		// Setup canvas
 		document.addEventListener("resize", ()=>{
 			this.resizeCanvas();
 		});
+
+		// Create layers
+		let tileLayerData:GlyphSource = {
+			get width() { return GameState.mapWidth },
+			get height() { return GameState.mapHeight },
+			glyphAt(x: number, y: number){
+				let cell = GameState.level.cellAt({x,y});
+				if (cell.objects.length > 0) return null;
+				return cell.tile;
+			}
+		};
+		let mobjLayerData:GlyphSource = {
+			get width() { return GameState.mapWidth },
+			get height() { return GameState.mapHeight },
+			glyphAt(x: number, y: number){
+				let mobj = GameState.level.cellAt({x,y}).topMobj();
+				let glyph = mobj?.glyph;
+				/*
+				if (mobj && mobj.z > MapObject.Z_PLACEABLE && glyph && !glyph.bg) {
+					glyph = Object.assign({bg:"#222"}, glyph);
+				}
+				 */
+				return glyph;
+			}
+		};
+		let glyphLayer = new GlyphLayer("tiles", tileLayerData, FONT, CELLWIDTH, CELLHEIGHT);
+		this.mainCanvas.addLayer(glyphLayer);
+		this.decalLayer = new DecalLayer("decals", 4);
+		this.mainCanvas.addLayer(this.decalLayer);
+		let mobjLayer = new GlyphLayer("mapObjects", mobjLayerData, FONT, CELLWIDTH, CELLHEIGHT);
 		this.mainCanvas.addLayer(mobjLayer);
+		this.particleLayer = new ParticleLayer("particless");
+		this.particleLayer.defaultAZ = -16*CELLHEIGHT;
+		this.particleLayer.defaultSize = 4;
+		this.particleLayer.res = 4;
+		this.mainCanvas.addLayer(this.particleLayer);
 
 		// Render loop
-		let animationFrame = () => {
-			this.render();
+		let t0 = 0;
+		let animationFrame = (time:number) => {
+			this.render(t0 ? (time-t0)/1000 : 0);
+			t0 = time;
 			requestAnimationFrame(animationFrame);
 		}
 		window.requestAnimationFrame(animationFrame);
 	}
 	resizeCanvas() {
 		this.mainCanvas.stretchToParentSize();
+		this.mainCanvas.setZoomFactor(1);
+		/* fit entier map
 		this.mainCanvas.fitToShow({
 			x1: 0,
 			x2: CELLWIDTH*GameState.level.width,
 			y1: 0,
 			y2: CELLHEIGHT*GameState.level.height
 		});
+		 */
 	}
-	private render() {
+	private ft = 0;
+	private frames = 0;
+	private fps = 0;
+	private render(dt:number) {
 		this.beforeRender?.();
+		this.ft += dt;
+		if (this.ft > 1) {
+			this.fps = this.frames;
+			this.frames = 0;
+			this.ft = 0;
+		}
 		let status = this.getStatusLine();
 		if (status !== this.statusText) {
 			this.statusText = status;
 			removeChildren(this.topStatus);
 			this.topStatus.append(...richText(status));
 		}
+		this.mainCanvas.setCenter({
+			x: (GameState.player.pos.x+0.5)*CELLWIDTH,
+			y: (GameState.player.pos.y+0.5)*CELLHEIGHT
+		})
+		this.particleLayer.update(dt);
 		this.mainCanvas.render();
+		this.frames++;
+	}
+
+	addParticle(def:ParticleDef) {
+		this.particleLayer.addParticle(def);
+	}
+	shootParticleFrom(gridXY:XY, direction:XY, type:"blood"|"spark") {
+		let n:number;
+		if (!direction.x) n = Math.abs(direction.y);
+		else if (!direction.y) n = Math.abs(direction.x);
+		else n = (direction.x**2+direction.y**2)**0.5;
+		if (!n) n = 1;
+
+		let fxrng = Game.fxrng;
+
+		let pd:ParticleDef = {
+			x: (gridXY.x+fxrng.nextFloat(0.25,0.75))*CELLWIDTH,
+			y: (gridXY.y+fxrng.nextFloat(0.75,1.25))*CELLHEIGHT,
+			z: 0.5*CELLHEIGHT,
+			ttl: 1000,//fxrng.nextFloat(0.25,1.0),
+			vx: 4*CELLWIDTH*(fxrng.nextFloat(-0.75,0.75)+direction.x/n),
+			vy: 4*CELLHEIGHT*(fxrng.nextFloat(-0.75,0.75)+direction.y/n),
+			vz: 4*fxrng.nextFloat(2,0)*CELLHEIGHT,
+			color: "white",
+			onTick: (p)=>{
+				let x = (p.x/CELLWIDTH)|0;
+				let y = (p.y/CELLHEIGHT)|0;
+				if (GameState.level.tileAt({x,y}) === Tiles.wall) {
+					p.vx = 0;
+					p.vy = 0;
+				}
+			}
+		};
+		switch (type) {
+			case "blood":
+				pd.color = Colors.LIGHTRED;
+				pd.onDeath = (p)=>{
+					this.decalLayer.addDecal({
+						x: (p.x/4|0)*4,
+						y: (p.y/4|0)*4,
+						color: Colors.RED,
+						size: 8
+					})
+				}
+				break;
+			case "spark":
+				pd.color = "white";
+				break;
+		}
+
+		this.addParticle(pd);
 	}
 
 	getStatusLine():string {
@@ -158,9 +265,11 @@ export class ScreenManager {
 		status += " ";
 		status += " SEED: "+String(GameState.seed).padEnd(6,' ');
 		status += " AP: ";
-		for (let x = 1; x <= player.speed; x++) {
+		for (let x = 1; x <= player.apPerAction; x++) {
 			status += (player.ap >= x) ? Chars.CIRCLE_BLACK : Chars.CIRCLE_WHITE;
 		}
+		status += " FPS: ";
+		status += String(this.fps|0).padStart(2,' ');
 		status += " ";
 		status += repeatString(Chars.LINE_HH, 10);
 
