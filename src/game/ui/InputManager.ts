@@ -9,7 +9,7 @@ let hkActions = {
 	MoveUp() { GameController.playerSmartAction(0,-1) },
 	MoveUpRight() { GameController.playerSmartAction(+1,-1) },
 	MoveLeft() { GameController.playerSmartAction(-1,0) },
-	SkipTurn() { /* TODO skip turn */ },
+	SkipTurn() { GameController.playerSmartAction(0, 0) },
 	MoveRight() { GameController.playerSmartAction(+1,0) },
 	MoveDownLeft() { GameController.playerSmartAction(-1,+1) },
 	MoveDown() { GameController.playerSmartAction(0,+1) },

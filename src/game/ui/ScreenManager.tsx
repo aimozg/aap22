@@ -12,11 +12,9 @@ import {Creature} from "../core/Creature";
 import {objectClassName} from "../../utils/types";
 import jsx from "texsaur";
 import {ParticleDef, ParticleLayer} from "./ParticleLayer";
-import {Colors} from "../../utils/ui/canvas";
 import {XY} from "../../utils/geom";
-import {Game} from "../Game";
 import {DecalLayer} from "./DecalLayer";
-import {Tiles} from "../core/Tile";
+import {ParticlePresetId, spawnParticle} from "./ParticlePresets";
 
 export let FONTFACE = "IBMBIOS";
 export let FONTSIZE = "32px";
@@ -210,51 +208,18 @@ export class ScreenManager {
 	addParticle(def:ParticleDef) {
 		this.particleLayer.addParticle(def);
 	}
-	shootParticleFrom(gridXY:XY, direction:XY, type:"blood"|"spark") {
+	shootParticlesFrom(count: number, gridXY:XY, direction:XY, type:ParticlePresetId) {
+		while(count-->0) this.shootParticleFrom(gridXY, direction, type);
+	}
+	shootParticleFrom(gridXY:XY, direction:XY, type:ParticlePresetId) {
 		let n:number;
 		if (!direction.x) n = Math.abs(direction.y);
 		else if (!direction.y) n = Math.abs(direction.x);
 		else n = (direction.x**2+direction.y**2)**0.5;
 		if (!n) n = 1;
-
-		let fxrng = Game.fxrng;
-
-		let pd:ParticleDef = {
-			x: (gridXY.x+fxrng.nextFloat(0.25,0.75))*CELLWIDTH,
-			y: (gridXY.y+fxrng.nextFloat(0.75,1.25))*CELLHEIGHT,
-			z: 0.5*CELLHEIGHT,
-			ttl: 1000,//fxrng.nextFloat(0.25,1.0),
-			vx: 4*CELLWIDTH*(fxrng.nextFloat(-0.75,0.75)+direction.x/n),
-			vy: 4*CELLHEIGHT*(fxrng.nextFloat(-0.75,0.75)+direction.y/n),
-			vz: 4*fxrng.nextFloat(2,0)*CELLHEIGHT,
-			color: "white",
-			onTick: (p)=>{
-				let x = (p.x/CELLWIDTH)|0;
-				let y = (p.y/CELLHEIGHT)|0;
-				if (GameState.level.tileAt({x,y}) === Tiles.wall) {
-					p.vx = 0;
-					p.vy = 0;
-				}
-			}
-		};
-		switch (type) {
-			case "blood":
-				pd.color = Colors.LIGHTRED;
-				pd.onDeath = (p)=>{
-					this.decalLayer.addDecal({
-						x: (p.x/4|0)*4,
-						y: (p.y/4|0)*4,
-						color: Colors.RED,
-						size: 8
-					})
-				}
-				break;
-			case "spark":
-				pd.color = "white";
-				break;
-		}
-
-		this.addParticle(pd);
+		this.addParticle(spawnParticle(type,
+			gridXY.x, gridXY.y, 0.5,
+			direction.x/n, direction.y/n, 0))
 	}
 
 	getStatusLine():string {

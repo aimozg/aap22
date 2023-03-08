@@ -67,7 +67,9 @@ export let GameState = new class {
 				logger.warn("No empty cells in room {}",room);
 			} else {
 				this.level.addObject(
-					new Creature(MonsterLib.Zombie, new MonsterAI()),
+					new Creature(
+						this.maprng.either(MonsterLib.Zombie, MonsterLib.Skeleton),
+						new MonsterAI()),
 					cell!.xy
 				);
 			}

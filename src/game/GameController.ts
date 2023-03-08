@@ -14,6 +14,7 @@ import {DamageType, DamageTypes} from "./combat/DamageType";
 import {Corpse} from "./objects/Corpse";
 import {Tiles} from "./core/Tile";
 import {MapObject} from "./core/MapObject";
+import {ParticlePresetId} from "./ui/ParticlePresets";
 
 let logger = LogManager.loggerFor("GameController");
 
@@ -117,6 +118,11 @@ export let GameController = new class {
 
 	smartAction(creature:Creature, dx:number, dy:number):boolean {
 		logger.debug("smartAction {} {} {}", creature, dx, dy);
+		if (dx === 0 && dy === 0) {
+			this.doSkip(creature);
+			return true;
+		}
+
 		let level = GameState.level;
 		let pos2 = XY.shift(creature.pos, dx, dy);
 		if (!level.contains(pos2)) return false;
@@ -191,13 +197,18 @@ export let GameController = new class {
 		if (damage <= 0) {
 			return;
 		}
-		for (let n = 0; n < damage*2; n++) {
-			let direction:XY = {x:0,y:-1};
-			if (source) {
-				direction = XY.subtract(target.pos,source.pos);
-			}
-			Game.screenManager.shootParticleFrom(target.pos, direction, "blood");
+		// Emit particles
+		let direction:XY        = {x:0,y:-1};
+		let pt: ParticlePresetId = "blood";
+		if (source) {
+			direction = XY.subtract(target.pos,source.pos);
 		}
+		if (target.tags.has("bones")) {
+			pt = "bone";
+		} else if (target.tags.has("construct")) {
+			pt = "spark";
+		}
+		Game.screenManager.shootParticlesFrom(damage*damage, target.pos, direction, pt);
 		target.hp -= damage;
 		if (target.hp <= 0) {
 			this.doKill(target, source);
@@ -214,6 +225,8 @@ export let GameController = new class {
 		level.removeObject(target);
 		level.addObject(new Corpse("dead "+target.name, target.color), pos);
 		// TODO award XP
+		// TODO pool of blood
+		// TODO gibbing
 	}
 
 	//-------//
@@ -231,6 +244,5 @@ export let GameController = new class {
 	playerSmartAction(dx: number, dy: number) {
 		logger.debug("playerSmartAction {} {}", dx, dy);
 		this.queuePlayerAction(()=>this.smartAction(GameState.player, dx, dy));
-
 	}
 }

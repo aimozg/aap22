@@ -65,7 +65,6 @@ export class ParticleLayer extends AbstractCanvasLayer {
 		p.x -= p.size/2;
 		p.y -= p.size/2;
 		if (p.vx === 0 && p.vy === 0 && p.vz === 0 && p.az === 0) p.v = false;
-		console.log(p.vx,p.vy,p.vz);
 		this.particles.push(p);
 	}
 	update(dt: number) {
