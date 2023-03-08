@@ -11,6 +11,7 @@ export let Colors = {
 	WHITE: '#FFF',
 	LIGHTGRAY: '#AAA',
 	DARKGRAY: '#555',
+	VDARKGRAY: '#333',
 	BLACK: '#000',
 	RED: '#A00',
 	ORANGE: '#A50',

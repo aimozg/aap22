@@ -31,6 +31,23 @@ export function xyPlusDir(pos:XY, dir:IDir8|Dir8Id):XY {
 	return XY.shift(pos, dir.dx, dir.dy);
 }
 
+export function dir8to(from:XY, to:XY):IDir8 {
+	let dx = to.x - from.x;
+	let dy = to.y - from.y;
+	if (dy < 0) {
+		if (dx < 0) return Dir8.UL;
+		else if (dx === 0) return Dir8.U;
+		else return Dir8.UR;
+	} else if (dy === 0) {
+		if (dx < 0) return Dir8.L;
+		else return Dir8.R;
+	} else {
+		if (dx < 0) return Dir8.DL;
+		else if (dx === 0) return Dir8.D;
+		else return Dir8.DR;
+	}
+}
+
 export type SideID = "U"|"D"|"L"|"R";
 
 export interface Side {

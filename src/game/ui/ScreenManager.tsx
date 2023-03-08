@@ -140,8 +140,12 @@ export class ScreenManager {
 			glyphAt(x: number, y: number){
 				let i = GameState.level.xy2i(x,y);
 				if (!GameState.vismap[i]) return null;
-				let mobj = GameState.level.cellAt({x,y}).topMobj();
+				let cell  = GameState.level.cellAt({x,y});
+				let mobj = cell.topMobj();
 				let glyph = mobj?.glyph;
+				if (glyph && !glyph.bg) {
+					glyph.bg = cell.tile.bg;
+				}
 				return glyph;
 			}
 		};

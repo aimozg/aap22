@@ -78,6 +78,9 @@ export class Creature extends MapObject {
 	canAct(): boolean {
 		return this.ap >= this.apPerAction;
 	}
+	get isAlive():boolean {
+		return this.hp > 0;
+	}
 
 	isHostileTo(other: Creature) {
 		if (other === this) return false;

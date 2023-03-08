@@ -43,3 +43,12 @@ export function genVisibilityMap(
 	return vismap;
 }
 
+export function checkLineOfSight(input: LosProvider,
+                       xy1: XY,
+                       xy2: XY): boolean {
+	let w = XYRect.iwidth(input.rect);
+	for (let xy of bresenline(xy1.x,xy1.y,xy2.x,xy2.y)) {
+		if (!input.visible(w*xy.y+xy.x)) return false;
+	}
+	return true;
+}

@@ -16,6 +16,11 @@ import {Tiles} from "./core/Tile";
 import {MapObject} from "./core/MapObject";
 import {ParticlePresetId} from "./ui/ParticlePresets";
 import {genVisibilityMap} from "../utils/los";
+import {ChunkMapGen} from "./mapgen/ChunkMapGen";
+import {dungeonChunks} from "./mapgen/dungeonChunks";
+import {LevelExit} from "./objects/LevelExit";
+import {MonsterLib} from "./data/MonsterLib";
+import {Level} from "./core/Level";
 
 let logger = LogManager.loggerFor("GameController");
 
@@ -34,7 +39,46 @@ export let GameController = new class {
 	// CORE //
 	//------//
 
+	newLevel() {
+		let maprng = GameState.maprng;
+		let level:Level;
+		while (true) {
+			level = ChunkMapGen.generateLevel(
+				maprng,
+				40,
+				40,
+				dungeonChunks
+			);
+			if (level.rooms.length > 5) break;
+		}
+		let rooms = level.rooms.slice();
+		let pcroom = maprng.randpop(rooms);
+		level.addObject(GameState.player, pcroom.randomEmptyCell(maprng)!.xy);
+
+		let exitroom = maprng.pick(rooms);
+		let exitcell = level.cellAt(exitroom.center());
+		if (!exitcell.isEmpty) exitcell = exitroom.randomEmptyCell(maprng)!;
+		level.addObject(new LevelExit(), exitcell.xy);
+
+		for (let room of rooms) {
+			let cell = room.randomEmptyCell(maprng);
+			if (!cell) {
+				logger.warn("No empty cells in room {}",room);
+			} else {
+				level.addObject(
+					new Creature(
+						maprng.either(MonsterLib.Zombie, MonsterLib.Skeleton),
+						new MonsterAI()),
+					cell!.xy
+				);
+			}
+		}
+		GameState.level = level;
+	}
+
 	initLevel() {
+		GameState.roundNo = 1;
+		GameState.tickNo = 0;
 		for (let creature of GameState.level.creatures()) {
 			creature.ap = creature.apPerAction;
 		}
@@ -119,7 +163,7 @@ export let GameController = new class {
 		let ai = creature.findEffect(MonsterAI);
 		if (!ai) {
 			logger.warn("creature {} has no AI", creature);
-			this.doSkip(creature);
+			this.actSkip(creature);
 		} else {
 			ai.execute();
 		}
@@ -129,10 +173,10 @@ export let GameController = new class {
 	// ACTIONS //
 	//---------//
 
-	smartAction(creature:Creature, dx:number, dy:number):boolean {
-		logger.debug("smartAction {} {} {}", creature, dx, dy);
+	actSmart(creature:Creature, dx:number, dy:number):boolean {
+		logger.debug("actSmart {} {} {}", creature, dx, dy);
 		if (dx === 0 && dy === 0) {
-			this.doSkip(creature);
+			this.actSkip(creature);
 			return true;
 		}
 
@@ -143,39 +187,41 @@ export let GameController = new class {
 		let target = level.creatureAt(pos2);
 		if (target) {
 			if (creature.isHostileTo(target)) {
-				this.doMeleeAttack(creature, target);
+				this.actMeleeAttack(creature, target);
 				return true;
 			}
 			return false;
 		}
 
 		if (level.tileAt(pos2) === Tiles.door_closed) {
-			this.doOpenDoor(creature, pos2);
+			this.actOpenDoor(creature, pos2);
 			return true;
 		}
 
 		if (!level.isEmpty(pos2)) return false;
-		this.doStep(creature, pos2);
+		this.actStep(creature, pos2);
 		return true
 	}
-	doStep(creature:Creature, newPos:XY) {
-		logger.info("doStep {}", creature, newPos);
-		creature.ap = 0;
-		creature.setPos(newPos);
+	actStep(actor:Creature, newPos:XY) {
+		logger.info("actStep {}", actor, newPos);
+		actor.ap = 0;
+		actor.setPos(newPos);
 	}
-	doSkip(creature:Creature) {
-		logger.info("doSkip {}", creature);
-		creature.ap = 0;
+	actSkip(actor:Creature) {
+		logger.info("actSkip {}", actor);
+		actor.ap = 0;
 	}
-	doOpenDoor(actor:Creature, pos:XY) {
-		logger.info("doOpenDoor {} {}",actor,pos);
+	actOpenDoor(actor:Creature, pos:XY) {
+		logger.info("actOpenDoor {} {}",actor,pos);
+		actor.ap = 0;
 		let level = actor.parentEntity!;
 		let cell = level.cellAt(pos);
 		if (cell.tile !== Tiles.door_closed) throw new Error(`No door at ${pos.x};${pos.y}!`);
 		cell.tile = Tiles.door_open;
 	}
-	doMeleeAttack(actor:Creature, target:Creature) {
-		logger.info("doMeleeAttack {} {}", actor, target);
+	actMeleeAttack(actor:Creature, target:Creature) {
+		logger.info("actMeleeAttack {} {}", actor, target);
+		actor.ap = 0;
 		// TODO
 		let toHit = actor.aim - target.dodge;
 		let rng   = GameState.rng;
@@ -257,6 +303,6 @@ export let GameController = new class {
 
 	playerSmartAction(dx: number, dy: number) {
 		logger.debug("playerSmartAction {} {}", dx, dy);
-		this.queuePlayerAction(()=>this.smartAction(GameState.player, dx, dy));
+		this.queuePlayerAction(()=>this.actSmart(GameState.player, dx, dy));
 	}
 }

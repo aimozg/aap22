@@ -15,6 +15,7 @@ export interface Tile extends GlyphData {
 
 // TODO store ids and have TileMeta EnumValue?
 export namespace Tiles {
+	let defaultBg= tinycolor(Colors.VDARKGRAY);
 	export const nothing:Tile = {
 		ch: ' ',
 		fg: tinycolor(Colors.BLACK),
@@ -22,8 +23,11 @@ export namespace Tiles {
 		walk: false
 	};
 	export const floor:Tile = {
-		ch: '.',
-		fg: tinycolor(Colors.DARKGRAY),
+		// ch: '.',
+		// fg: tinycolor(Colors.DARKGRAY),
+		ch: '',
+		fg: '',
+		bg: defaultBg,
 		vision: true,
 		walk: true
 	};
@@ -36,6 +40,7 @@ export namespace Tiles {
 	export const collapsed_wall:Tile = {
 		ch: Chars.TRIANGLE_UP,
 		fg: tinycolor(Colors.LIGHTGRAY),
+		bg: defaultBg,
 		vision: true,
 		walk: false
 	};
@@ -48,6 +53,7 @@ export namespace Tiles {
 	export const door_open:Tile = {
 		ch: Chars.BLOCK_LHALF,
 		fg: tinycolor(Colors.WHITE),
+		bg: defaultBg,
 		vision: true,
 		walk: true
 	};

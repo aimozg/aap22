@@ -6,7 +6,7 @@ export class Player extends Creature {
 	constructor() {
 		super({
 			name: "Hero",
-			ch: Chars.SMILE_BLACK,
+			ch: Chars.SMILE_WHITE,
 			color: Colors.LIGHTYELLOW,
 			tags: ["player"],
 

@@ -23,6 +23,10 @@ export namespace XY {
 	export function subtract(a:XY,b:XY):XY {
 		return {x:a.x-b.x,y:a.y-b.y};
 	}
+	export function adjacent(xy1:XY,xy2:XY):boolean {
+		return Math.abs(xy1.x-xy2.x) <= 1 &&
+			Math.abs(xy1.y-xy2.y) <= 1;
+	}
 }
 
 export interface XYRect {
