@@ -15,6 +15,7 @@ import {Corpse} from "./objects/Corpse";
 import {Tiles} from "./core/Tile";
 import {MapObject} from "./core/MapObject";
 import {ParticlePresetId} from "./ui/ParticlePresets";
+import {genVisibilityMap} from "../utils/los";
 
 let logger = LogManager.loggerFor("GameController");
 
@@ -27,6 +28,7 @@ export let GameController = new class {
 	//---------//
 
 	playerCanAct = false;
+	visDirty = true;
 
 	//------//
 	// CORE //
@@ -36,6 +38,8 @@ export let GameController = new class {
 		for (let creature of GameState.level.creatures()) {
 			creature.ap = creature.apPerAction;
 		}
+		this.visDirty = true;
+		this.checkVisibility();
 	}
 
 	update() {
@@ -50,11 +54,14 @@ export let GameController = new class {
 						let queuedAction = this.playerActionQueue.shift();
 						if (queuedAction) {
 							queuedAction();
+							this.visDirty = true;
 						} else {
 							this.playerCanAct = true;
+							this.checkVisibility();
 							return;
 						}
 					} else {
+						this.visDirty = true;
 						this.doAI(creature);
 						loop = true;
 					}
@@ -65,6 +72,12 @@ export let GameController = new class {
 		this.nextTick();
 	}
 
+	checkVisibility() {
+		if (this.visDirty) {
+			GameState.vismap = genVisibilityMap(GameState.level, GameState.player.pos, false, GameState.vismap);
+			this.visDirty = false;
+		}
+	}
 	log(message:string, substitutions?:Record<string, string|Entity|number>) {
 		if (substitutions) Game.screenManager.logsub(message, substitutions);
 		else Game.screenManager.log(message);
@@ -238,6 +251,7 @@ export let GameController = new class {
 			this.playerActionQueue.push(action);
 		} else {
 			action();
+			this.visDirty = true;
 		}
 	}
 

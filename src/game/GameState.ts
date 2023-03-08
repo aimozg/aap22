@@ -22,6 +22,7 @@ export let GameState = new class {
 
 	seed: number;
 	level: Level;
+	vismap: Int8Array;
 	player: Player;
 	rng: Random;
 	maprng: Random;

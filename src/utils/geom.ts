@@ -38,6 +38,15 @@ export namespace XYRect {
 	export function fheight(rect:XYRect):number {
 		return rect.y2 - rect.y1;
 	}
+	export function iwidth(rect:XYRect):number {
+		return rect.x2 + 1 - rect.x1;
+	}
+	export function iheight(rect:XYRect):number {
+		return rect.y2 + 1 - rect.y1;
+	}
+	export function isize(rect:XYRect):number {
+		return iwidth(rect)*iheight(rect);
+	}
 	export function fcenter(rect:XYRect):XY {
 		return {
 			x: (rect.x1 + rect.x2) / 2,
@@ -66,6 +75,36 @@ export namespace XYRect {
 			for (let x = rect.x1; x <= rect.x2; x++)
 				result.push({x,y});
 		return result;
+	}
+	export function forEach(rect:XYRect, iter:(cell:XY)=>void) {
+		for (let y = rect.y1; y <= rect.y2; y++)
+			for (let x = rect.x1; x <= rect.x2; x++)
+				iter({x,y});
+	}
+	export function map<O>(rect:XYRect, iter:(cell:XY)=>O):O[] {
+		let result:O[] = [];
+		for (let y = rect.y1; y <= rect.y2; y++)
+			for (let x = rect.x1; x <= rect.x2; x++)
+				result.push(iter({x,y}));
+		return result;
+	}
+	export function perimeter(rect:XYRect): XY[] {
+		let result:XY[] = [];
+		perimeterForEach(rect,xy=> {result.push(xy)});
+		return result;
+	}
+
+	/**
+	 * Iterate coordinates topleft->topright->bottomright->bottomleft
+	 * @param rect
+	 * @param callback Return exactly `false` to stop iteration
+	 */
+	export function perimeterForEach(rect:XYRect, callback:(cell:XY)=>any): void {
+		let {x1,y1,x2,y2} = rect;
+		for (let x = x1; x <= x2; x++) if (callback({x,y:y1}) === false) return;
+		for (let y = y1+1; y <= y2; y++) if (callback({x:x2,y}) === false) return;
+		for (let x = x2-1; x >= x1; x--) if (callback({x,y:y2}) === false) return;
+		for (let y = y2-1; y > y1; y--) if (callback({x:x1,y}) === false) return;
 	}
 	export function fromWH(width:number, height:number, top:number=0, left:number=0):XYRect {
 		return {

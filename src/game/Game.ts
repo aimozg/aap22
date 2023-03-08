@@ -33,6 +33,7 @@ export namespace Game {
 		GameController.roundStart();
 		screenManager.beforeRender = ()=>{
 			GameController.update();
+			GameController.checkVisibility();
 		}
 		screenManager.resizeCanvas();
 	}

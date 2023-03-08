@@ -13,10 +13,7 @@ import {Random} from "../../utils/math/Random";
 import {GlyphData} from "../ui/GlyphLayer";
 import {Creature} from "./Creature";
 import {Dir8List, xyPlusDir} from "../../utils/grid";
-
-function xy2id(xy: XY): number {
-	return (xy.y << 16) | xy.x;
-}
+import {LosProvider} from "../../utils/los";
 
 export class Cell {
 	constructor(
@@ -64,7 +61,7 @@ export class Room implements XYRect {
 	get y2(): number { return this.bottomRight.y }
 
 	cells():Cell[] {
-		return XYRect.cells(this).map(xy=>this.level.cellAt(xy));
+		return XYRect.map(this, xy=>this.level.cellAt(xy));
 	}
 	cellAtLocal(xy:XY):Cell {
 		return this.level.cellAt(XY.add(xy, this.topLeft));
@@ -78,7 +75,7 @@ export class Room implements XYRect {
 	}
 }
 
-export class Level extends Entity {
+export class Level extends Entity implements LosProvider {
 	constructor(public readonly width: number,
 	            public readonly height: number) {
 		super();
@@ -88,6 +85,7 @@ export class Level extends Entity {
 	cells   = createArray(this.width * this.height, (i) =>
 		new Cell(this, this.i2xy(i)));
 	rooms: Room[] = [];
+	readonly rect:XYRect = XYRect.fromWH(this.width, this.height);
 
 	i2xy(i: number): XY {
 		return {x: (i % this.width), y: (i / this.width) | 0};
@@ -118,7 +116,7 @@ export class Level extends Entity {
 	}
 
 	objectsAt(xy: XY): MapObject[] {
-		return this.mobjmap.get(xy2id(xy));
+		return this.mobjmap.get(this.xy2i(xy.x,xy.y));
 	}
 
 	creatureAt(xy: XY): Creature | undefined {
@@ -133,26 +131,30 @@ export class Level extends Entity {
 		return 0 <= xy.x && xy.x < this.width && 0 <= xy.y && xy.y < this.height;
 	}
 
+	visible(idx: number): boolean {
+		return this.cells[idx].tile.vision
+	}
+
 	//-----------//
 	// MODIFIERS //
 	//-----------//
 	addObject(obj: MapObject, pos: XY) {
 		obj.setParent(this);
 		obj.moved(pos);
-		this.mobjmap.set(xy2id(pos), obj);
+		this.mobjmap.set(this.xy2i(pos.x,pos.y), obj);
 	}
 
 	removeObject(obj: MapObject) {
-		this.mobjmap.delete(xy2id(obj.pos), obj);
+		this.mobjmap.delete(this.xy2i(obj.pos.x,obj.pos.y), obj);
 		obj.removeParent();
 	}
 
 	moveObject(obj: MapObject, newPos: XY) {
 		if (obj.parentEntity !== this) throw new Error(`Bad parent ${obj.parentEntity}`);
 		let oldPos = obj.pos;
-		this.mobjmap.delete(xy2id(oldPos), obj);
+		this.mobjmap.delete(this.xy2i(oldPos.x,oldPos.y), obj);
 		obj.moved(newPos);
-		this.mobjmap.set(xy2id(newPos), obj);
+		this.mobjmap.set(this.xy2i(newPos.x,newPos.y), obj);
 	}
 
 	//---------------//

@@ -3,13 +3,13 @@
  */
 
 import {AbstractCanvasLayer} from "../../utils/ui/LayeredCanvas";
-import {AnimatedColor, animatedColorToRGB, RGBColor} from "../../utils/ui/canvas";
+import {AnimatedColor, animatedColorToRGB} from "../../utils/ui/canvas";
 import {milliTime} from "../../utils/time";
 
 export interface GlyphData {
 	ch: string;
 	fg: AnimatedColor;
-	bg?: RGBColor | null;
+	bg?: AnimatedColor;
 }
 
 export interface GlyphSource {

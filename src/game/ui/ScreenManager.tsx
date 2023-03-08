@@ -127,6 +127,8 @@ export class ScreenManager {
 			get width() { return GameState.mapWidth },
 			get height() { return GameState.mapHeight },
 			glyphAt(x: number, y: number){
+				let i = GameState.level.xy2i(x,y);
+				if (!GameState.vismap[i]) return null;
 				let cell = GameState.level.cellAt({x,y});
 				if (cell.objects.length > 0) return null;
 				return cell.tile;
@@ -136,13 +138,10 @@ export class ScreenManager {
 			get width() { return GameState.mapWidth },
 			get height() { return GameState.mapHeight },
 			glyphAt(x: number, y: number){
+				let i = GameState.level.xy2i(x,y);
+				if (!GameState.vismap[i]) return null;
 				let mobj = GameState.level.cellAt({x,y}).topMobj();
 				let glyph = mobj?.glyph;
-				/*
-				if (mobj && mobj.z > MapObject.Z_PLACEABLE && glyph && !glyph.bg) {
-					glyph = Object.assign({bg:"#222"}, glyph);
-				}
-				 */
 				return glyph;
 			}
 		};

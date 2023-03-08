@@ -39,7 +39,7 @@ function iterateColors(p:Particle, colors:string[], totalTtl:number) {
 function toDecal(p:Particle, color:string, size:number) {
 	switch (particleTile(p)) {
 		case Tiles.lava:
-			this.addParticle({
+			Game.screenManager.addParticle({
 				x: p.x,
 				y: p.y,
 				z: 0.1,
@@ -104,8 +104,8 @@ export function spawnParticle(
 			pd.az = particleLayer.defaultAZ/2;
 			pd.ttl = fxrng.nextFloat(0.125,0.25);
 			// pd.size = particleLayer.defaultSize*2;
-			pd.vx! *= 2;
-			pd.vy! *= 2;
+			// pd.vx! *= 2;
+			// pd.vy! *= 2;
 			pd.vz! *= 0.25;
 			pd.onTick = (p)=>{
 				hitWallBounce(p);
