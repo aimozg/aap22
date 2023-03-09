@@ -7,19 +7,23 @@ import {Level} from "./core/Level";
 import {Player} from "./core/Player";
 import {Random} from "../utils/math/Random";
 import {XorWowRandom} from "../utils/math/XorWowRandom";
-import {Game} from "./Game";
 import {LogManager} from "../utils/logging/LogManager";
+import {Tiles} from "./core/Tile";
 
 let logger = LogManager.loggerFor("GameState");
 
 export let GameState = new class {
 
 	seed: number;
-	level: Level;
-	vismap: Int8Array;
-	player: Player;
 	rng: Random;
 	maprng: Random;
+
+	depth: number;
+	level: Level;
+	vismap: Int8Array;
+	approachPlayerMap: Int8Array;
+	player: Player;
+
 	roundNo: number;
 	tickNo: number; // 1 round = 4 ticks
 
@@ -34,10 +38,10 @@ export let GameState = new class {
 		this.rng = XorWowRandom.create(seed,0);
 		this.maprng = XorWowRandom.create(this.rng.nextInt(),this.rng.nextInt());
 
-		GameState.player = new Player();
-
-		Game.gameController.newLevel();
-
-		Game.screenManager.log("{1;Game started!} Use arrow keys or numpad to move. ");
+		this.depth = 1;
+		this.level = new Level(1,1);
+		this.level.cells[0].tile = Tiles.floor;
+		this.player = new Player();
+		this.level.addObject(this.player, {x:0,y:0});
 	}
 }

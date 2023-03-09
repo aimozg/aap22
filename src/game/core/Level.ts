@@ -5,15 +5,15 @@
 import {Entity} from "../Entity";
 import {MultiMap} from "../../utils/MultiMap";
 import {MapObject} from "./MapObject";
-import {XY, XYRect} from "../../utils/geom";
+import {XY, XYRect} from "../../utils/grid/geom";
 import {createArray} from "../../utils/collections";
 import {Tile, Tiles} from "./Tile";
 import {coerce} from "../../utils/math/utils";
 import {Random} from "../../utils/math/Random";
 import {GlyphData} from "../ui/GlyphLayer";
 import {Creature} from "./Creature";
-import {Dir8List, xyPlusDir} from "../../utils/grid";
-import {LosProvider} from "../../utils/los";
+import {Dir8List, xyPlusDir} from "../../utils/grid/grid";
+import {LosProvider} from "../../utils/grid/los";
 
 export class Cell {
 	constructor(
@@ -79,13 +79,15 @@ export class Level extends Entity implements LosProvider {
 	constructor(public readonly width: number,
 	            public readonly height: number) {
 		super();
+		this.cells = createArray(this.width * this.height, (i) =>
+			new Cell(this, this.i2xy(i)));
+		this.rect = XYRect.fromWH(this.width, this.height)
 	}
 
-	mobjmap = new MultiMap<number, MapObject>()
-	cells   = createArray(this.width * this.height, (i) =>
-		new Cell(this, this.i2xy(i)));
-	rooms: Room[] = [];
-	readonly rect:XYRect = XYRect.fromWH(this.width, this.height);
+	readonly mobjmap = new MultiMap<number, MapObject>()
+	readonly cells: Cell[];
+	readonly rooms: Room[] = [];
+	readonly rect:XYRect;
 
 	i2xy(i: number): XY {
 		return {x: (i % this.width), y: (i / this.width) | 0};
@@ -133,6 +135,10 @@ export class Level extends Entity implements LosProvider {
 
 	visible(idx: number): boolean {
 		return this.cells[idx].tile.vision
+	}
+
+	get cleared():boolean {
+		return !this.mobjmap.some(e=>e instanceof Creature && e.faction !== "player");
 	}
 
 	//-----------//

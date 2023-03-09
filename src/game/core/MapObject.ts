@@ -3,7 +3,7 @@
  */
 
 import {Entity} from "../Entity";
-import {XY} from "../../utils/geom";
+import {XY} from "../../utils/grid/geom";
 import {Level} from "./Level";
 import {GlyphData} from "../ui/GlyphLayer";
 import {objectClassName} from "../../utils/types";
@@ -11,7 +11,7 @@ import {objectClassName} from "../../utils/types";
 export abstract class MapObject extends Entity {
 	pos: XY = {x:0,y:0};
 	z = 0;
-	parentEntity: Level;
+	declare parentEntity: Level;
 
 	moved(newPos: XY) {
 		this.pos = newPos;

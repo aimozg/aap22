@@ -28,13 +28,14 @@ export namespace Game {
 		await screenManager.setup();
 		await inputManager.setup();
 
-		GameState.resetGame();
-		GameController.initLevel();
-		GameController.roundStart();
 		screenManager.beforeRender = ()=>{
 			GameController.update();
 			GameController.checkVisibility();
 		}
+
+		GameState.resetGame();
+		GameController.newGame();
+
 		screenManager.resizeCanvas();
 	}
 

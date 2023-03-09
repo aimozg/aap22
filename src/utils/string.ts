@@ -5,7 +5,7 @@
 export function repeatString(s:string, n:number):string {
 	let result = "";
 	while (n > 0) {
-		if (n%2 === 0) result += s;
+		if (n%2 === 1) result += s;
 		s += s;
 		n >>= 1;
 	}
@@ -32,3 +32,19 @@ export function substitutePattern(
 	}
 	return pattern.replace(/(?<!\\)\{([\w_.]+)}/g, (match, s) => replacer(s) ?? match)
 }
+
+const knownEntities = new Map<string, string>();
+const tmpEl = document.createElement("span")
+const entityRex = /^&(?:\w+|#x[a-fA-F\d]+|#\d+);$/
+
+export function parseXmlEntity(entity: string): string {
+	if (knownEntities.has(entity)) return knownEntities.get(entity)!;
+	if (!entityRex.test(entity)) return entity;
+	tmpEl.innerHTML = entity;
+	let value = tmpEl.textContent!;
+	knownEntities.set(entity, value);
+	return value;
+}
+
+export const NBSP = '\u00A0';
+export const ZWSP = '\u200B';

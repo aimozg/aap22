@@ -4,7 +4,7 @@
 
 import {createCanvas} from "./canvas";
 import {coerce, logarithm} from "../math/utils";
-import {XY, XYRect} from "../geom";
+import {XY, XYRect} from "../grid/geom";
 import {getComputedBoxes} from "./dom";
 import {LogManager} from "../logging/LogManager";
 import {milliTime} from "../time";

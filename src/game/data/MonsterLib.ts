@@ -12,10 +12,11 @@ export namespace MonsterLib {
 		color: Colors.BROWN,
 		tags: ["undead"],
 
+		level: 1,
 		speed: 3,
-		hp: 10,
+		hp: 5,
 		aim: 50,
-		damage: 5,
+		damage: 4,
 		dodge: 0,
 	};
 	export let Skeleton:CreaturePrototype = {
@@ -24,10 +25,11 @@ export namespace MonsterLib {
 		color: Colors.WHITE,
 		tags: ["undead","bones"],
 
+		level: 1,
 		speed: 4,
-		hp: 5,
+		hp: 3,
 		aim: 85,
-		damage: 5,
+		damage: 2,
 		dodge: 15
 	};
 }

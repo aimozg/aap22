@@ -6,10 +6,11 @@ import {Creature} from "../core/Creature";
 import {EntityEffect} from "../Entity";
 import {GameController} from "../GameController";
 import {GameState} from "../GameState";
-import {Dir8List, dir8to} from "../../utils/grid";
-import {checkLineOfSight} from "../../utils/los";
-import {XY} from "../../utils/geom";
+import {Dir8List, xyPlusDir} from "../../utils/grid/grid";
+import {checkLineOfSight} from "../../utils/grid/los";
+import {XY} from "../../utils/grid/geom";
 import {LogManager} from "../../utils/logging/LogManager";
+import {findGradient} from "../../utils/grid/dijkstra";
 
 export type AIState = "disabled"|"idle"|"hunt";
 
@@ -24,14 +25,14 @@ export class MonsterAI extends EntityEffect<Creature> {
 	target: Creature|null = null;
 	execute() {
 		logger.debug("execute {} {}",this.host, this.state);
-		let gc = GameController, me = this.host!;
+		let gc = GameController, me = this.host!, level = GameState.level;
 		switch (this.state) {
 			case "disabled":
 				gc.actSkip(me);
 				break;
 			case "idle": {
 				let target = GameState.player;
-				if (target.isAlive && checkLineOfSight(GameState.level, target.pos, me.pos)) {
+				if (target.isAlive && checkLineOfSight(level, target.pos, me.pos)) {
 					logger.debug("can see player - switch to hunt");
 					this.state  = "hunt";
 					this.target = target;
@@ -39,7 +40,10 @@ export class MonsterAI extends EntityEffect<Creature> {
 					return;
 				}
 				let dir = GameState.rng.pick(Dir8List);
-				if (!gc.actSmart(me, dir.dx, dir.dy)) {
+				let targetPos = xyPlusDir(me.pos, dir);
+				if (level.contains(targetPos) && level.isEmpty(targetPos)) {
+					gc.actStep(me, targetPos)
+				} else {
 					gc.actSkip(me);
 				}
 				break;
@@ -56,8 +60,12 @@ export class MonsterAI extends EntityEffect<Creature> {
 					gc.actMeleeAttack(me, target);
 					return;
 				}
-				let dir = dir8to(me.pos, target.pos);
-				if(!gc.actSmart(me, dir.dx, dir.dy)) {
+				let dir = findGradient(GameState.approachPlayerMap, level.width, level.height, me.pos, 8, true);
+				if (dir) {
+					if (!gc.actSmart(me, dir.dx, dir.dy)) {
+						gc.actSkip(me);
+					}
+				} else {
 					gc.actSkip(me);
 				}
 				break;

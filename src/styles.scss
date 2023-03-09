@@ -13,7 +13,7 @@
 }
 
 .bios {
-  font-family: IBMBIOS;
+  font-family: IBMBIOS, monospace;
 }
 
 html, body {
@@ -39,18 +39,28 @@ main {
   display: grid;
   margin: 4px;
   grid-template-columns: 1fr max(960px) 300px 1fr;
-  grid-template-rows: 3em 1fr;
+  grid-template-rows: 4em 1fr;
 }
 .top {
   justify-self: stretch;
   max-width: 960px;
   white-space: pre-wrap;
   grid-column: span 2;
+  border-bottom: 4px solid #777;
+  margin-bottom: 12px;
+  overflow: hidden;
 }
 .topstatus {
   text-align: center;
 }
 .divcanvas {
+}
+.sidebar {
+  font-family: IBMBIOS, monospace;
+  white-space: pre-wrap;
+  border-left: 4px solid #777;
+  margin-left: 14px;
+  padding-left: 14px;
 }
 .text-error {
   color: #000;

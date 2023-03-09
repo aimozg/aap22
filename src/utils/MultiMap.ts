@@ -36,6 +36,9 @@ export class MultiMap<K,V> {
 		if (!list) return false;
 		if (list.remove(value)) {
 			this.#count--;
+			if (list.length === 0) {
+				this.#map.delete(key);
+			}
 			return true;
 		}
 		return false;
@@ -65,5 +68,21 @@ export class MultiMap<K,V> {
 		this.#map.forEach((values,key)=>{
 			values.forEach(value=>callback.call(thisarg, value, key, this));
 		})
+	}
+	some<THISARG>(callback:(this:THISARG, value:V, key:K, map:MultiMap<K,V>)=>boolean, thisarg?:THISARG) {
+		for (let [k,vs] of this.#map.entries()) {
+			for (let v of vs) {
+				if (callback.call(thisarg, v, k, this)) return true;
+			}
+		}
+		return false;
+	}
+	every<THISARG>(callback:(this:THISARG, value:V, key:K, map:MultiMap<K,V>)=>boolean, thisarg?:THISARG) {
+		for (let [k,vs] of this.#map.entries()) {
+			for (let v of vs) {
+				if (!callback.call(thisarg, v, k, this)) return false;
+			}
+		}
+		return true;
 	}
 }

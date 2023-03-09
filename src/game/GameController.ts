@@ -3,7 +3,7 @@
  */
 
 import {GameState} from "./GameState";
-import {XY} from "../utils/geom";
+import {XY} from "../utils/grid/geom";
 import {Creature} from "./core/Creature";
 import {Player} from "./core/Player";
 import {LogManager} from "../utils/logging/LogManager";
@@ -15,12 +15,11 @@ import {Corpse} from "./objects/Corpse";
 import {Tiles} from "./core/Tile";
 import {MapObject} from "./core/MapObject";
 import {ParticlePresetId} from "./ui/ParticlePresets";
-import {genVisibilityMap} from "../utils/los";
+import {genVisibilityMap} from "../utils/grid/los";
 import {ChunkMapGen} from "./mapgen/ChunkMapGen";
 import {dungeonChunks} from "./mapgen/dungeonChunks";
-import {LevelExit} from "./objects/LevelExit";
-import {MonsterLib} from "./data/MonsterLib";
-import {Level} from "./core/Level";
+import {fillRooms} from "./mapgen/RoomFiller";
+import {fillDijkstraMap} from "../utils/grid/dijkstra";
 
 let logger = LogManager.loggerFor("GameController");
 
@@ -33,56 +32,47 @@ export let GameController = new class {
 	//---------//
 
 	playerCanAct = false;
-	visDirty = true;
+	dirty        = true;
 
 	//------//
 	// CORE //
 	//------//
 
-	newLevel() {
-		let maprng = GameState.maprng;
-		let level:Level;
+	newGame() {
+		this.generateNewLevel();
+
+		this.log("{1;Game started!} Use arrow keys or numpad to move. ");
+
+		GameController.initLevel();
+		GameController.roundStart();
+	}
+
+	generateNewLevel() {
 		while (true) {
-			level = ChunkMapGen.generateLevel(
-				maprng,
-				40,
-				40,
+			let level = ChunkMapGen.generateLevel(
+				GameState.maprng,
+				80,
+				80,
 				dungeonChunks
 			);
-			if (level.rooms.length > 5) break;
-		}
-		let rooms = level.rooms.slice();
-		let pcroom = maprng.randpop(rooms);
-		level.addObject(GameState.player, pcroom.randomEmptyCell(maprng)!.xy);
-
-		let exitroom = maprng.pick(rooms);
-		let exitcell = level.cellAt(exitroom.center());
-		if (!exitcell.isEmpty) exitcell = exitroom.randomEmptyCell(maprng)!;
-		level.addObject(new LevelExit(), exitcell.xy);
-
-		for (let room of rooms) {
-			let cell = room.randomEmptyCell(maprng);
-			if (!cell) {
-				logger.warn("No empty cells in room {}",room);
-			} else {
-				level.addObject(
-					new Creature(
-						maprng.either(MonsterLib.Zombie, MonsterLib.Skeleton),
-						new MonsterAI()),
-					cell!.xy
-				);
+			if (level.rooms.length > 10) {
+				fillRooms(level, GameState.depth);
+				GameState.level = level;
+				break;
 			}
 		}
-		GameState.level = level;
 	}
 
 	initLevel() {
+		let level         = GameState.level;
 		GameState.roundNo = 1;
-		GameState.tickNo = 0;
-		for (let creature of GameState.level.creatures()) {
+		GameState.tickNo  = 0;
+		GameState.vismap  = new Int8Array(level.width*level.height);
+		GameState.approachPlayerMap = new Int8Array(level.width*level.height);
+		for (let creature of level.creatures()) {
 			creature.ap = creature.apPerAction;
 		}
-		this.visDirty = true;
+		this.dirty = true;
 		this.checkVisibility();
 	}
 
@@ -98,14 +88,14 @@ export let GameController = new class {
 						let queuedAction = this.playerActionQueue.shift();
 						if (queuedAction) {
 							queuedAction();
-							this.visDirty = true;
+							this.dirty = true;
 						} else {
 							this.playerCanAct = true;
 							this.checkVisibility();
 							return;
 						}
 					} else {
-						this.visDirty = true;
+						this.dirty = true;
 						this.doAI(creature);
 						loop = true;
 					}
@@ -117,9 +107,23 @@ export let GameController = new class {
 	}
 
 	checkVisibility() {
-		if (this.visDirty) {
-			GameState.vismap = genVisibilityMap(GameState.level, GameState.player.pos, false, GameState.vismap);
-			this.visDirty = false;
+		if (this.dirty) {
+			let level       = GameState.level;
+			let player      = GameState.player;
+			GameState.vismap = genVisibilityMap(level, player.pos, false, GameState.vismap);
+			let approachMap = GameState.approachPlayerMap;
+			approachMap.fill(127);
+			approachMap[player.pos.y*level.width+player.pos.x] = 0;
+			fillDijkstraMap(
+				approachMap,
+				level.width,
+				level.height,
+				(x,y)=>
+					level.cellAt({x,y}).tile.walk,
+				[player.pos],
+				8
+			);
+			this.dirty       = false;
 		}
 	}
 	log(message:string, substitutions?:Record<string, string|Entity|number>) {
@@ -159,7 +163,7 @@ export let GameController = new class {
 	}
 
 	doAI(creature:Creature) {
-		logger.info("doAI {}", creature);
+		logger.debug("doAI {}", creature);
 		let ai = creature.findEffect(MonsterAI);
 		if (!ai) {
 			logger.warn("creature {} has no AI", creature);
@@ -203,16 +207,16 @@ export let GameController = new class {
 		return true
 	}
 	actStep(actor:Creature, newPos:XY) {
-		logger.info("actStep {}", actor, newPos);
+		logger.info("actStep {} {};{}", actor, newPos.x, newPos.y);
 		actor.ap = 0;
 		actor.setPos(newPos);
 	}
 	actSkip(actor:Creature) {
-		logger.info("actSkip {}", actor);
+		logger.debug("actSkip {}", actor);
 		actor.ap = 0;
 	}
 	actOpenDoor(actor:Creature, pos:XY) {
-		logger.info("actOpenDoor {} {}",actor,pos);
+		logger.info("actOpenDoor {} {};{}",actor,pos.x,pos.y);
 		actor.ap = 0;
 		let level = actor.parentEntity!;
 		let cell = level.cellAt(pos);
@@ -297,7 +301,7 @@ export let GameController = new class {
 			this.playerActionQueue.push(action);
 		} else {
 			action();
-			this.visDirty = true;
+			this.dirty = true;
 		}
 	}
 

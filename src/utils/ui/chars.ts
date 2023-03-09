@@ -58,8 +58,8 @@ namespace Chars {
 	export const BLOCK_25             = "░";
 	export const BLOCK_50             = "▒";
 	export const BLOCK_75             = "▓";
-	export const SQUARE_BLACK         = "■";
 	export const SQUARE_WHITE         = "■";
+	export const SQUARE_BLACK         = "□";
 	export const SQUARE_SMALL_BLACK   = "▪";
 	export const SQUARE_SMALL_WHITE   = "▫";
 	export const BOX_SMALL_LINE       = "▬";

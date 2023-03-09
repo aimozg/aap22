@@ -15,6 +15,7 @@ export interface CreaturePrototype {
 	color: string;
 	tags?: CreatureTag[];
 
+	level: number;
 	speed: number;
 	hp: number;
 	aim: number;
@@ -36,6 +37,7 @@ export class Creature extends MapObject {
 			fg: tinycolor(this.color)
 		}
 		this.tags = new Set(proto.tags);
+		this.level  = proto.level;
 		this.hp     = proto.hp;
 		this.hpMax  = proto.hp;
 		this.aim    = proto.aim;
@@ -60,6 +62,7 @@ export class Creature extends MapObject {
 	// STATS //
 	//-------//
 
+	level: number;
 	ap: number = 0;
 	speed: number;
 	hp: number;

@@ -10,6 +10,7 @@ export class Player extends Creature {
 			color: Colors.LIGHTYELLOW,
 			tags: ["player"],
 
+			level: 1,
 			speed: 4,
 			hp: 20,
 			aim: 85,

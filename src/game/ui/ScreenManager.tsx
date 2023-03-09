@@ -5,14 +5,14 @@ import {LayeredCanvas} from "../../utils/ui/LayeredCanvas";
 import {GlyphLayer, GlyphSource} from "./GlyphLayer";
 import {GameState} from "../GameState";
 import {createElement, removeChildren} from "../../utils/ui/dom";
-import {repeatString, substitutePattern} from "../../utils/string";
+import {substitutePattern} from "../../utils/string";
 import Chars from "../../utils/ui/chars";
 import {Entity} from "../Entity";
 import {Creature} from "../core/Creature";
 import {objectClassName} from "../../utils/types";
 import jsx from "texsaur";
 import {ParticleDef, ParticleLayer} from "./ParticleLayer";
-import {XY} from "../../utils/geom";
+import {XY} from "../../utils/grid/geom";
 import {DecalLayer} from "./DecalLayer";
 import {ParticlePresetId, spawnParticle} from "./ParticlePresets";
 
@@ -76,7 +76,7 @@ export class ScreenManager {
 	private mainCanvas:LayeredCanvas;
 	particleLayer: ParticleLayer;
 	decalLayer: DecalLayer;
-	private sideStatus: Element;
+	private sidebar: Element;
 
 	async setup() {
 		this.mainCanvas = new LayeredCanvas({
@@ -96,7 +96,7 @@ export class ScreenManager {
 				{this.mainCanvas.element}
 			</div>
 			<div class="sidebar">
-				{this.sideStatus=<div class="sidestatus"></div>}
+				{this.sidebar=<div class="sidestatus"></div>}
 			</div>
 			<div></div>
 		</main>);
@@ -131,6 +131,16 @@ export class ScreenManager {
 				if (!GameState.vismap[i]) return null;
 				let cell = GameState.level.cellAt({x,y});
 				if (cell.objects.length > 0) return null;
+				/*
+				let d = GameState.approachPlayerMap[i];
+				if (d >= 0 && d <= 9) {
+					return {
+						fg: '#777',
+						ch: String(d),
+						bg: '#333'
+					}
+				}
+				 */
 				return cell.tile;
 			}
 		};
@@ -205,7 +215,28 @@ export class ScreenManager {
 		})
 		this.particleLayer.update(dt);
 		this.mainCanvas.render();
+		this.updateSidebar();
 		this.frames++;
+	}
+	private updateSidebar() {
+		removeChildren(this.sidebar);
+
+		let player = GameState.player;
+
+		this.sidebar.append(`Seed ${GameState.seed}\n`);
+		this.sidebar.append(
+			<span class={GameState.level.cleared?"text-blue":""}>Dungeon level {GameState.depth}{'\n'}</span>);
+		this.sidebar.append(`Hero level ${player.level}\n`);
+		this.sidebar.append("HP: ");
+		for (let n = 1; n <= player.hpMax; n++) {
+			if (player.hp >= n) this.sidebar.append(<span class="text-green">{Chars.SQUARE_WHITE}</span>);
+			else this.sidebar.append(<span class="text-red">{Chars.SQUARE_BLACK}</span>)
+			if (n%10 === 0 && n < player.hpMax) this.sidebar.append("\n    ");
+		}
+		this.sidebar.append('\n');
+		this.sidebar.append(`Aim   : ${String(player.aim).padStart(3,' ')}%\n`);
+		this.sidebar.append(`Dodge : ${String(player.dodge).padStart(3,' ')}%\n`);
+		this.sidebar.append(`Damage: ${String(player.damage).padStart(3,' ')}\n`);
 	}
 
 	addParticle(def:ParticleDef) {
@@ -229,17 +260,8 @@ export class ScreenManager {
 		let player = GameState.player;
 
 		let status = "";
-		status += repeatString(Chars.LINE_HH, 10);
-		status += " ";
-		status += " SEED: "+String(GameState.seed).padEnd(6,' ');
-		status += " AP: ";
-		for (let x = 1; x <= player.apPerAction; x++) {
-			status += (player.ap >= x) ? Chars.CIRCLE_BLACK : Chars.CIRCLE_WHITE;
-		}
 		status += " FPS: ";
 		status += String(this.fps|0).padStart(2,' ');
-		status += " ";
-		status += repeatString(Chars.LINE_HH, 10);
 
 		return status;
 	}

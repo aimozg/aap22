@@ -4,8 +4,8 @@
 
 import {Level, Room} from "../core/Level";
 import {Tile, Tiles} from "../core/Tile";
-import {Side, sideCoords, SideID, SideList, xyPlusDir} from "../../utils/grid";
-import {XY, XYRect} from "../../utils/geom";
+import {Side, sideCoords, SideID, SideList, xyPlusDir} from "../../utils/grid/grid";
+import {XY, XYRect} from "../../utils/grid/geom";
 import {Random} from "../../utils/math/Random";
 import {cleanupTiles, layoutSymmetricalVariants} from "./utils";
 
