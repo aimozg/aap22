@@ -14,7 +14,7 @@ export class Player extends Creature {
 			speed: 4,
 			hp: 20,
 			aim: 85,
-			damage: 10,
+			damage: 4,
 			dodge: 10,
 		});
 	}

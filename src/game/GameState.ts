@@ -9,6 +9,8 @@ import {Random} from "../utils/math/Random";
 import {XorWowRandom} from "../utils/math/XorWowRandom";
 import {LogManager} from "../utils/logging/LogManager";
 import {Tiles} from "./core/Tile";
+import {WeaponLib} from "./data/WeaponLib";
+import {Item} from "./core/Item";
 
 let logger = LogManager.loggerFor("GameState");
 
@@ -42,6 +44,7 @@ export let GameState = new class {
 		this.level = new Level(1,1);
 		this.level.cells[0].tile = Tiles.floor;
 		this.player = new Player();
+		this.player.setWeapon(new Item(WeaponLib.dagger));
 		this.level.addObject(this.player, {x:0,y:0});
 	}
 }

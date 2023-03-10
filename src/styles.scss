@@ -37,8 +37,10 @@ body {
 main {
   flex-grow: 1;
   display: grid;
-  margin: 4px;
-  grid-template-columns: 1fr max(960px) 300px 1fr;
+  margin: 4px auto;
+  max-width: calc(960px + 360px);
+  grid-template-columns: 0 auto 360px 0;
+  //grid-template-columns: 1fr max(1fr, 960px) 300px 1fr;
   grid-template-rows: 4em 1fr;
 }
 .top {
@@ -70,7 +72,7 @@ main {
 .text-0, .text-normal {
   color: #AAA;
 }
-.text-1, .text-white {
+.text-1, .text-white, .text-rarity-normal {
   color: #FFF;
 }
 .text-2, .text-gray {
@@ -79,19 +81,19 @@ main {
 .text-3, .text-red {
   color: #A00;
 }
-.text-4, .text-orange {
+.text-4, .text-orange, .text-rarity-unique {
   color: #A50;
 }
 .text-5, .text-yellow {
   color: #AA0;
 }
-.text-6, .text-green {
+.text-6, .text-green, .text-rarity-rare {
   color: #0A0;
 }
 .text-7, .text-cyan {
   color: #0AA;
 }
-.text-8, .text-blue {
+.text-8, .text-blue, .text-rarity-magical {
   color: #05A;
 }
 .text-9, .text-purple {

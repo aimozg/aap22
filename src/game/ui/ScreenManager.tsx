@@ -15,6 +15,7 @@ import {ParticleDef, ParticleLayer} from "./ParticleLayer";
 import {XY} from "../../utils/grid/geom";
 import {DecalLayer} from "./DecalLayer";
 import {ParticlePresetId, spawnParticle} from "./ParticlePresets";
+import {Item, ItemRarity} from "../core/Item";
 
 export let FONTFACE = "IBMBIOS";
 export let FONTSIZE = "32px";
@@ -61,6 +62,11 @@ function richText(source:string):HTMLElement[] {
 	}
 	flush();
 	return result;
+}
+
+function itemNameSpan(item:Item|null|undefined):Node|string {
+	if (!item) return "-";
+	return <span class={'text-rarity-'+ItemRarity[item.rarity].toLowerCase()}>{item.name}</span>
 }
 
 export class ScreenManager {
@@ -225,7 +231,9 @@ export class ScreenManager {
 
 		this.sidebar.append(`Seed ${GameState.seed}\n`);
 		this.sidebar.append(
-			<span class={GameState.level.cleared?"text-blue":""}>Dungeon level {GameState.depth}{'\n'}</span>);
+			<span class={GameState.level.cleared?"text-blue":""}>Dungeon level {GameState.depth}</span>);
+		this.sidebar.append(<br/>);
+		this.sidebar.append(<br/>);
 		this.sidebar.append(`Hero level ${player.level}\n`);
 		this.sidebar.append("HP: ");
 		for (let n = 1; n <= player.hpMax; n++) {
@@ -237,6 +245,17 @@ export class ScreenManager {
 		this.sidebar.append(`Aim   : ${String(player.aim).padStart(3,' ')}%\n`);
 		this.sidebar.append(`Dodge : ${String(player.dodge).padStart(3,' ')}%\n`);
 		this.sidebar.append(`Damage: ${String(player.damage).padStart(3,' ')}\n`);
+
+		this.sidebar.append("\n");
+		this.sidebar.append("Weapon: ");
+		this.sidebar.append(itemNameSpan(player.weapon))
+		this.sidebar.append("\n");
+		this.sidebar.append("Armor : ");
+		this.sidebar.append(itemNameSpan(player.armor))
+		this.sidebar.append("\n");
+
+		this.sidebar.append("\n");
+
 	}
 
 	addParticle(def:ParticleDef) {

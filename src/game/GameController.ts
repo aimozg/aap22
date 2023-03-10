@@ -20,6 +20,7 @@ import {ChunkMapGen} from "./mapgen/ChunkMapGen";
 import {dungeonChunks} from "./mapgen/dungeonChunks";
 import {fillRooms} from "./mapgen/RoomFiller";
 import {fillDijkstraMap} from "../utils/grid/dijkstra";
+import {atLeast} from "../utils/math/utils";
 
 let logger = LogManager.loggerFor("GameController");
 
@@ -227,7 +228,7 @@ export let GameController = new class {
 		logger.info("actMeleeAttack {} {}", actor, target);
 		actor.ap = 0;
 		// TODO
-		let toHit = actor.aim - target.dodge;
+		let toHit = atLeast(0, actor.aim) - atLeast(0, target.dodge);
 		let rng   = GameState.rng;
 		let wasHit = rng.d100vs(toHit);
 		if (wasHit) {

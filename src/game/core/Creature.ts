@@ -3,6 +3,7 @@ import {GlyphData} from "../ui/GlyphLayer";
 import * as tinycolor from "tinycolor2";
 import {EntityEffect} from "../Entity";
 import {coerce} from "../../utils/math/utils";
+import {Item} from "./Item";
 
 export type CreatureTag =
 	"player"|"boss"|
@@ -39,11 +40,11 @@ export class Creature extends MapObject {
 		this.tags = new Set(proto.tags);
 		this.level  = proto.level;
 		this.hp     = proto.hp;
-		this.hpMax  = proto.hp;
-		this.aim    = proto.aim;
-		this.damage = proto.damage;
-		this.dodge  = proto.dodge;
-		this.speed  = proto.speed;
+		this.hpMax         = proto.hp;
+		this.naturalAim    = proto.aim;
+		this.naturalDamage = proto.damage;
+		this.naturalDodge  = proto.dodge;
+		this.speed         = proto.speed;
 
 		for (let effect of effects) {
 			effect.addTo(this);
@@ -67,13 +68,31 @@ export class Creature extends MapObject {
 	speed: number;
 	hp: number;
 	hpMax: number;
-	aim: number;
-	damage: number;
-	dodge: number;
+	naturalAim: number;
+	naturalDamage: number;
+	naturalDodge: number;
+
+	//-------//
+	// ITEMS //
+	//-------//
+
+	weapon: Item|null;
+	armor: Item|null;
+	inventory: (Item|null)[];
 
 	//---------//
 	// HELPERS //
 	//---------//
+
+	get aim(): number {
+		return this.naturalAim
+	}
+	get damage(): number {
+		return this.weapon?.weapon?.damage ?? this.naturalDamage;
+	}
+	get dodge(): number {
+		return this.naturalDodge
+	}
 
 	get apPerAction():number {
 		return coerce(1, 8-this.speed, 8);
@@ -88,6 +107,17 @@ export class Creature extends MapObject {
 	isHostileTo(other: Creature) {
 		if (other === this) return false;
 		return other.faction !== this.faction;
+	}
+
+	//-----------//
+	// MODIFIERS //
+	//-----------//
+
+	setWeapon(weapon:Item|null) {
+		if (weapon && !weapon.weapon) throw new Error(`Item ${weapon} is not a weapon`);
+		this.weapon?.unequipped();
+		this.weapon = weapon;
+		weapon?.equipped(this);
 	}
 }
 

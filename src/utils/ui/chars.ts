@@ -87,5 +87,7 @@ namespace Chars {
 	export const NOTE2                = "♫";
 	export const CHECKMARK            = "✓";
 	export const BOX_QUESTION         = "�";
+	export const DAGGER               = "†";
+	export const DOUBLE_DAGGER        = "‡";
 }
 export default Chars;
