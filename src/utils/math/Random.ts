@@ -208,6 +208,9 @@ export abstract class Random {
 		if (e === null) throw new Error("Cannot pick from empty list");
 		return e;
 	}
+	pickWeightedTuple<E>(source:[number,E][]):E {
+		return this.pickWeighted(source,tuple=>tuple[0])[1];
+	}
 	pickWeightedOrNull<E>(source:E[], weightFn:(e:E)=>number):E|null {
 		if (source.length === 0) return null;
 		// Single-pass weighted random

@@ -145,14 +145,22 @@ export class Level extends Entity implements LosProvider {
 	// MODIFIERS //
 	//-----------//
 	addObject(obj: MapObject, pos: XY) {
-		obj.setParent(this);
 		obj.moved(pos);
-		this.mobjmap.set(this.xy2i(pos.x,pos.y), obj);
+		this.addChild(obj);
+	}
+
+	addChild(e: MapObject) {
+		super.addChild(e);
+		this.mobjmap.set(this.xy2i(e.pos.x,e.pos.y), e);
 	}
 
 	removeObject(obj: MapObject) {
-		this.mobjmap.delete(this.xy2i(obj.pos.x,obj.pos.y), obj);
-		obj.removeParent();
+		this.removeChild(obj);
+	}
+
+	removeChild(e: MapObject) {
+		this.mobjmap.delete(this.xy2i(e.pos.x,e.pos.y), e);
+		super.removeChild(e);
 	}
 
 	moveObject(obj: MapObject, newPos: XY) {

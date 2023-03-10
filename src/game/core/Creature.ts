@@ -78,7 +78,7 @@ export class Creature extends MapObject {
 
 	weapon: Item|null;
 	armor: Item|null;
-	inventory: (Item|null)[];
+	inventory: (Item|null)[] = [];
 
 	//---------//
 	// HELPERS //
@@ -118,6 +118,11 @@ export class Creature extends MapObject {
 		this.weapon?.unequipped();
 		this.weapon = weapon;
 		weapon?.equipped(this);
+	}
+	addItem(item:Item):boolean {
+		// TODO inventory size
+		this.inventory.push(item);
+		return true;
 	}
 }
 

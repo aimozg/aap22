@@ -15,7 +15,8 @@ import {ParticleDef, ParticleLayer} from "./ParticleLayer";
 import {XY} from "../../utils/grid/geom";
 import {DecalLayer} from "./DecalLayer";
 import {ParticlePresetId, spawnParticle} from "./ParticlePresets";
-import {Item, ItemRarity} from "../core/Item";
+import {DroppedItem, Item, ItemRarity} from "../core/Item";
+import {Corpse} from "../objects/Corpse";
 
 export let FONTFACE = "IBMBIOS";
 export let FONTSIZE = "32px";
@@ -66,7 +67,10 @@ function richText(source:string):HTMLElement[] {
 
 function itemNameSpan(item:Item|null|undefined):Node|string {
 	if (!item) return "-";
-	return <span class={'text-rarity-'+ItemRarity[item.rarity].toLowerCase()}>{item.name}</span>
+	let itemdesc = "";
+	if (item.weapon) itemdesc += ` (${item.weapon.damage})`;
+	if (item.armor) itemdesc += ` [${item.armor.defense}]`;
+	return <span class={'text-rarity-'+ItemRarity[item.rarity].toLowerCase()}>{item.name}{itemdesc}</span>
 }
 
 export class ScreenManager {
@@ -255,7 +259,10 @@ export class ScreenManager {
 		this.sidebar.append("\n");
 
 		this.sidebar.append("\n");
-
+		for (let i of player.inventory) {
+			this.sidebar.append(itemNameSpan(i));
+			this.sidebar.append("\n");
+		}
 	}
 
 	addParticle(def:ParticleDef) {
@@ -279,6 +286,14 @@ export class ScreenManager {
 		let player = GameState.player;
 
 		let status = "";
+		if (!player.isAlive) {
+			status += "{red;GAME OVER}  "
+		} else {
+			let yousee = player.cell.objects.filter(o => o !== player).map(mobj => this.formatTag(mobj, "")).join(", ");
+			if (yousee) {
+				status += `You see ${yousee}.`;
+			}
+		}
 		status += " FPS: ";
 		status += String(this.fps|0).padStart(2,' ');
 
@@ -297,8 +312,20 @@ export class ScreenManager {
 					// if plural return ""
 					return "es";
 			}
+		} else if (obj instanceof DroppedItem) {
+			return this.formatTag(obj.item, key);
+		} else if (obj instanceof Item) {
+			switch (key) {
+				case "":
+					return `{rarity-${ItemRarity[obj.rarity].toLowerCase()};${obj.name}}`;
+			}
+		} else if (obj instanceof Corpse) {
+			switch (key) {
+				case "":
+					return obj.name;
+			}
 		}
-		return `{error;Unknown key ${objectClassName(obj)}.${key}}`
+		return `{error;Unknown tag ${objectClassName(obj)}.${key}}`
 	}
 	logsub(message: string, substitutions: Record<string, string | Entity | number>) {
 		message = substitutePattern(message, str=>{

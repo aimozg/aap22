@@ -14,6 +14,8 @@ let hkActions = {
 	MoveDownLeft() { GameController.playerSmartAction(-1,+1) },
 	MoveDown() { GameController.playerSmartAction(0,+1) },
 	MoveDownRight() { GameController.playerSmartAction(+1,+1) },
+
+	Pickup() { GameController.playerPickup() }
 }
 
 let hotkeys:Record<string,()=>void> = {
@@ -30,6 +32,7 @@ let hotkeys:Record<string,()=>void> = {
 	[KeyCodes.NUMPAD1]: hkActions.MoveDownLeft,
 	[KeyCodes.NUMPAD2]: hkActions.MoveDown,
 	[KeyCodes.NUMPAD3]: hkActions.MoveDownRight,
+	[KeyCodes.KEYG]: hkActions.Pickup,
 }
 
 export class InputManager {

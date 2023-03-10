@@ -5,7 +5,6 @@
 import {Entity} from "../Entity";
 import {GlyphData} from "../ui/GlyphLayer";
 import {MapObject} from "./MapObject";
-import {types} from "sass";
 import {Colors} from "../../utils/ui/canvas";
 import {Creature} from "./Creature";
 
@@ -85,6 +84,7 @@ export class DroppedItem extends MapObject {
 		item.setParent(this);
 	}
 
+	z = MapObject.Z_ITEM;
 	walkable: boolean = true;
 	get name() { return this.item.name }
 	get glyph() { return this.item.glyph }

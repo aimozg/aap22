@@ -48,12 +48,10 @@ export abstract class Entity {
 		this.parentEntity = e;
 	}
 	addChild(e:Entity) {
-		e.parentChanged(this);
-		this.childAdded(e);
+		e.setParent(this);
 	}
 	removeChild(e:Entity) {
-		e.parentChanged(null);
-		this.childRemoved(e);
+		e.setParent(null);
 	}
 	addEffect(e:EntityEffect<this>) {
 		e.addTo(this);

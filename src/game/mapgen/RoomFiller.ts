@@ -9,23 +9,33 @@ import {Creature} from "../core/Creature";
 import {MonsterLib} from "../data/MonsterLib";
 import {MonsterAI} from "../monster/MonsterAI";
 import {LogManager} from "../../utils/logging/LogManager";
+import {Item} from "../core/Item";
+import {WeaponLib} from "../data/WeaponLib";
 
 let logger = LogManager.loggerFor("RoomFiller");
 
 function fillRoom(level:Level, room:Room, threatLevel:number) {
 	let maprng = GameState.maprng;
 	let n = maprng.nextInt(2, 5);
+	let proto = maprng.either(MonsterLib.Zombie, MonsterLib.Skeleton);
 	while (n-->0) {
 		let cell = room.randomEmptyCell(maprng);
 		if (!cell) {
 			logger.warn("No empty cells in room {}", room);
 		} else {
-			level.addObject(
-				new Creature(
-					maprng.either(MonsterLib.Zombie, MonsterLib.Skeleton),
-					new MonsterAI()),
-				cell!.xy
-			);
+			let creature = new Creature(
+				proto,
+				new MonsterAI());
+			if (maprng.nextBoolean(0.25)) {
+				let id = maprng.pickWeightedTuple([
+					[1, WeaponLib.dagger],
+					[0.5, WeaponLib.sword],
+					[0.25, WeaponLib.greatsword],
+				]);
+				let item = new Item(id);
+				creature.addItem(item);
+			}
+			level.addObject(creature, cell!.xy);
 		}
 	}
 }

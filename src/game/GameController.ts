@@ -21,6 +21,7 @@ import {dungeonChunks} from "./mapgen/dungeonChunks";
 import {fillRooms} from "./mapgen/RoomFiller";
 import {fillDijkstraMap} from "../utils/grid/dijkstra";
 import {atLeast} from "../utils/math/utils";
+import {DroppedItem} from "./core/Item";
 
 let logger = LogManager.loggerFor("GameController");
 
@@ -244,6 +245,22 @@ export let GameController = new class {
 			this.log("{a} miss{a.es} {b}. ", {a:actor, b:target});
 		}
 	}
+
+	actPickup(actor: Creature, item:DroppedItem) {
+		if (actor === GameState.player) {
+			// TODO actor.log?.()
+			Game.screenManager.logsub("You pick up {item}. ", {item:item.item});
+		}
+		actor.ap = 0;
+		if (actor.addItem(item.item)) {
+			item.parentEntity?.removeObject(item);
+		}
+	}
+
+	//-----------//
+	// MODIFIERS //
+	//-----------//
+
 	doDamage(target:Creature, damage:number, damageType:DamageType, source:MapObject|null) {
 		logger.info("doDamage {} {} {} {}", target, damage, damageType.name, source);
 		damage |= 0;
@@ -280,17 +297,31 @@ export let GameController = new class {
 	}
 	doKill(target:Creature, source:MapObject|null) {
 		logger.info("doKill {} {}",target,source);
-		let pos          = target.pos;
-		let level = target.parentEntity;
+		/* TODO check for 'dead' condition
+		if (!target.isAlive) {
+			logger.warn(`doKill on dead {}`, target);
+			return;
+		}
+		 */
+		let level = target.parentEntity!;
+		let cell = target.cell;
+
 		let str = /*source
 			? "{b} {red;kill{b.s}} {a}. "
-			: */"{a} {red;die{a.s}}.";
+			: */"{a} {red;die{a.s}}. ";
 		this.log(str, {a:target, b:source!});
 		level.removeObject(target);
-		level.addObject(new Corpse("dead "+target.name, target.color), pos);
+		level.addObject(new Corpse("dead "+target.name, target.color), cell.xy);
 		// TODO award XP
 		// TODO pool of blood
 		// TODO gibbing
+		for (let item of target.inventory) {
+			if (!item) continue;
+			// TODO drop loot on nearest cell
+			if (cell.isEmpty) {
+				level.addObject(new DroppedItem(item), cell.xy);
+			}
+		}
 	}
 
 	//-------//
@@ -309,5 +340,17 @@ export let GameController = new class {
 	playerSmartAction(dx: number, dy: number) {
 		logger.debug("playerSmartAction {} {}", dx, dy);
 		this.queuePlayerAction(()=>this.actSmart(GameState.player, dx, dy));
+	}
+	playerPickup() {
+		this.queuePlayerAction(()=>{
+			let player = GameState.player;
+			let cell = player.cell;
+			let item = cell.objects.find((o):o is DroppedItem=>o instanceof DroppedItem);
+			if (!item) {
+				Game.screenManager.log("Nothing to pickup! ");
+			} else {
+				this.actPickup(player, item);
+			}
+		})
 	}
 }
