@@ -2,7 +2,7 @@
  * Created by aimozg on 08.03.2023.
  */
 
-import {Particle, ParticleDef} from "./ParticleLayer";
+import {Particle, ParticleDef} from "../../utils/ui/ParticleLayer";
 import {Colors} from "../../utils/ui/canvas";
 import {Tile, Tiles} from "../core/Tile";
 import {GameState} from "../GameState";

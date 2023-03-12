@@ -1,8 +1,8 @@
 /*
  * Created by aimozg on 08.03.2023.
  */
-import {AbstractCanvasLayer} from "../../utils/ui/LayeredCanvas";
-import {XYRect} from "../../utils/grid/geom";
+import {AbstractCanvasLayer} from "./LayeredCanvas";
+import {XYRect} from "../grid/geom";
 
 export interface Decal {
 	x: number;

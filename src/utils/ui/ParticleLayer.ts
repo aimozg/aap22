@@ -2,8 +2,8 @@
  * Created by aimozg on 08.03.2023.
  */
 
-import {AbstractCanvasLayer} from "../../utils/ui/LayeredCanvas";
-import {RGBColor} from "../../utils/ui/canvas";
+import {AbstractCanvasLayer} from "./LayeredCanvas";
+import {RGBColor} from "./canvas";
 import * as tinycolor from "tinycolor2";
 
 export interface Particle {
@@ -78,7 +78,7 @@ export class ParticleStore {
 				p.vz += p.az * dt;
 			}
 			p.onTick?.(p);
-			if (p.ttl <= 0) {
+			if (p.ttl < 0) {
 				p.onDeath?.(p);
 				remove.push(i);
 			}

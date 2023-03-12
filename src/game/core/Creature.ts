@@ -1,5 +1,5 @@
 import {MapObject} from "./MapObject";
-import {GlyphData} from "../ui/GlyphLayer";
+import {GlyphData} from "../../utils/ui/GlyphLayer";
 import * as tinycolor from "tinycolor2";
 import {EntityEffect} from "../Entity";
 import {coerce} from "../../utils/math/utils";

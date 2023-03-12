@@ -10,7 +10,7 @@ import {createArray} from "../../utils/collections";
 import {Tile, Tiles} from "./Tile";
 import {coerce} from "../../utils/math/utils";
 import {Random} from "../../utils/math/Random";
-import {GlyphData} from "../ui/GlyphLayer";
+import {GlyphData} from "../../utils/ui/GlyphLayer";
 import {Creature} from "./Creature";
 import {Dir8List, xyPlusDir} from "../../utils/grid/grid";
 import {LosProvider} from "../../utils/grid/los";

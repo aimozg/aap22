@@ -2,7 +2,7 @@
  * Created by aimozg on 05.03.2023.
  */
 
-import {GlyphData} from "../ui/GlyphLayer";
+import {GlyphData} from "../../utils/ui/GlyphLayer";
 import Chars from "../../utils/ui/chars";
 import * as tinycolor from "tinycolor2";
 import {Colors} from "../../utils/ui/canvas";

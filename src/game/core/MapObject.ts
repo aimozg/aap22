@@ -5,7 +5,7 @@
 import {Entity} from "../Entity";
 import {XY} from "../../utils/grid/geom";
 import {Cell, Level} from "./Level";
-import {GlyphData} from "../ui/GlyphLayer";
+import {GlyphData} from "../../utils/ui/GlyphLayer";
 import {objectClassName} from "../../utils/types";
 
 export abstract class MapObject extends Entity {

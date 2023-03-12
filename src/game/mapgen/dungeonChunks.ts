@@ -163,6 +163,8 @@ export let dungeonChunks = new ChunkSet([{
 	#######
 	*.....#
 	#####.#
+	____#.*
+	#####.#
 	*.....#
 	#######`,
 	type: "corridor",

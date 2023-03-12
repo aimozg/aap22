@@ -2,11 +2,11 @@
  * Created by aimozg on 04.03.2023.
  */
 
-import {AbstractCanvasLayer} from "../../utils/ui/LayeredCanvas";
-import {AnimatedColor, animatedColorToRGB} from "../../utils/ui/canvas";
-import {milliTime} from "../../utils/time";
-import {BitmapFont} from "../../utils/ui/BitmapFont";
-import {XYRect} from "../../utils/grid/geom";
+import {AbstractCanvasLayer} from "./LayeredCanvas";
+import {AnimatedColor, animatedColorToRGB} from "./canvas";
+import {milliTime} from "../time";
+import {BitmapFont} from "./BitmapFont";
+import {XYRect} from "../grid/geom";
 
 export interface GlyphData {
 	ch: string;

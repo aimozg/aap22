@@ -4,7 +4,7 @@
 
 import {MapObject} from "../core/MapObject";
 import * as tinycolor from "tinycolor2";
-import {GlyphData} from "../ui/GlyphLayer";
+import {GlyphData} from "../../utils/ui/GlyphLayer";
 
 export class Corpse extends MapObject {
 	constructor(

@@ -199,6 +199,14 @@ export class LayeredCanvas {
 		this.fitToShow(rect, true, false);
 	}
 
+	unproject(localXY: XY): XY {
+		let vr = this.visibleRect();
+		return {
+			x: (localXY.x + vr.x1) * vr.fwidth / this.viewportWidth,
+			y: (localXY.y + vr.y1) * vr.fheight / this.viewportHeight,
+		}
+	}
+
 	render() {
 		this.phase = this.animationSpeed * milliTime() / 1000;
 		this.beforeRender?.(this);

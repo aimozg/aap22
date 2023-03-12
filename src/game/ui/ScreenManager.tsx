@@ -2,7 +2,7 @@
  * Created by aimozg on 05.03.2023.
  */
 import {LayeredCanvas} from "../../utils/ui/LayeredCanvas";
-import {GlyphLayer, GlyphSource} from "./GlyphLayer";
+import {GlyphLayer, GlyphSource} from "../../utils/ui/GlyphLayer";
 import {GameState} from "../GameState";
 import {createElement, removeChildren} from "../../utils/ui/dom";
 import {substitutePattern} from "../../utils/string";
@@ -11,13 +11,14 @@ import {Entity} from "../Entity";
 import {Creature} from "../core/Creature";
 import {objectClassName} from "../../utils/types";
 import jsx from "texsaur";
-import {ParticleDef, ParticleLayer} from "./ParticleLayer";
+import {ParticleDef, ParticleLayer} from "../../utils/ui/ParticleLayer";
 import {XY} from "../../utils/grid/geom";
-import {DecalLayer} from "./DecalLayer";
+import {DecalLayer} from "../../utils/ui/DecalLayer";
 import {ParticlePresetId, spawnParticle} from "./ParticlePresets";
 import {DroppedItem, Item, ItemRarity} from "../core/Item";
 import {Corpse} from "../objects/Corpse";
 import BitmapFontIBMBIOS from "../../../assets/ibmbios";
+import {types} from "sass";
 
 export let FONTFACE = "IBMBIOS";
 export let FONTSIZE = "32px";
@@ -166,12 +167,24 @@ export class ScreenManager {
 				let cell  = GameState.level.cellAt({x,y});
 				let mobj = cell.topMobj();
 				let glyph = mobj?.glyph;
+				if (glyph) glyph={...glyph};
 				if (glyph && !glyph.bg) {
 					glyph.bg = cell.tile.bg;
 				}
 				return glyph;
 			}
 		};
+		/*
+		let mouseX = -1, mouseY = -1;
+		this.mainCanvas.element.addEventListener("mousemove",e=>{
+			let cellxy = this.mainCanvas.unproject({
+				x: e.offsetX,
+				y: e.offsetY
+			});
+			mouseX = (cellxy.x/CELLWIDTH)|0;
+			mouseY = (cellxy.y/CELLHEIGHT)|0;
+		});
+		 */
 		let glyphLayer = new GlyphLayer("tiles", tileLayerData, glyphFont, CELLWIDTH, CELLHEIGHT);
 		this.mainCanvas.addLayer(glyphLayer);
 		this.decalLayer = new DecalLayer("decals");

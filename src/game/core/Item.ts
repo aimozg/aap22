@@ -3,7 +3,7 @@
  */
 
 import {Entity} from "../Entity";
-import {GlyphData} from "../ui/GlyphLayer";
+import {GlyphData} from "../../utils/ui/GlyphLayer";
 import {MapObject} from "./MapObject";
 import {Colors} from "../../utils/ui/canvas";
 import {Creature} from "./Creature";
