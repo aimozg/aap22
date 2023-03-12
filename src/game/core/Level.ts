@@ -44,24 +44,21 @@ export class Cell {
 	}
 }
 
-export class Room implements XYRect {
+export class Room extends XYRect {
 	constructor(
 		public readonly level: Level,
-		public readonly topLeft: XY,
-		public readonly bottomRight: XY
-	) {}
+		topLeft: XY,
+		bottomRight: XY
+	) {
+		super(topLeft.x,topLeft.y,bottomRight.x,bottomRight.y)
+	}
 
 	toString() {
 		return `[Room (${this.x1};${this.y1};${this.x2};${this.y2})]`
 	}
 
-	get x1(): number { return this.topLeft.x }
-	get y1(): number { return this.topLeft.y }
-	get x2(): number { return this.bottomRight.x }
-	get y2(): number { return this.bottomRight.y }
-
 	cells():Cell[] {
-		return XYRect.map(this, xy=>this.level.cellAt(xy));
+		return this.mapXY(xy=>this.level.cellAt(xy));
 	}
 	cellAtLocal(xy:XY):Cell {
 		return this.level.cellAt(XY.add(xy, this.topLeft));
@@ -71,7 +68,7 @@ export class Room implements XYRect {
 	}
 
 	center():XY {
-		return XYRect.icenter(this);
+		return this.icenter();
 	}
 }
 
@@ -81,7 +78,7 @@ export class Level extends Entity implements LosProvider {
 		super();
 		this.cells = createArray(this.width * this.height, (i) =>
 			new Cell(this, this.i2xy(i)));
-		this.rect = XYRect.fromWH(this.width, this.height)
+		this.rect = XYRect.fromWHint(this.width, this.height)
 	}
 
 	readonly mobjmap = new MultiMap<number, MapObject>()

@@ -17,6 +17,7 @@ import {DecalLayer} from "./DecalLayer";
 import {ParticlePresetId, spawnParticle} from "./ParticlePresets";
 import {DroppedItem, Item, ItemRarity} from "../core/Item";
 import {Corpse} from "../objects/Corpse";
+import BitmapFontIBMBIOS from "../../../assets/ibmbios";
 
 export let FONTFACE = "IBMBIOS";
 export let FONTSIZE = "32px";
@@ -127,6 +128,8 @@ export class ScreenManager {
 			 */
 		}
 
+		let glyphFont = await BitmapFontIBMBIOS;
+
 		// Setup canvas
 		document.addEventListener("resize", ()=>{
 			this.resizeCanvas();
@@ -169,15 +172,15 @@ export class ScreenManager {
 				return glyph;
 			}
 		};
-		let glyphLayer = new GlyphLayer("tiles", tileLayerData, FONT, CELLWIDTH, CELLHEIGHT);
+		let glyphLayer = new GlyphLayer("tiles", tileLayerData, glyphFont, CELLWIDTH, CELLHEIGHT);
 		this.mainCanvas.addLayer(glyphLayer);
-		this.decalLayer = new DecalLayer("decals", 4);
+		this.decalLayer = new DecalLayer("decals");
 		this.mainCanvas.addLayer(this.decalLayer);
-		let mobjLayer = new GlyphLayer("mapObjects", mobjLayerData, FONT, CELLWIDTH, CELLHEIGHT);
+		let mobjLayer = new GlyphLayer("mapObjects", mobjLayerData, glyphFont, CELLWIDTH, CELLHEIGHT);
 		this.mainCanvas.addLayer(mobjLayer);
-		this.particleLayer = new ParticleLayer("particless");
-		this.particleLayer.defaultAZ = -16*CELLHEIGHT;
-		this.particleLayer.defaultSize = 4;
+		this.particleLayer = new ParticleLayer("particles");
+		this.particleLayer.particles.defaultAZ = -16*CELLHEIGHT;
+		this.particleLayer.particles.defaultSize = 4;
 		this.particleLayer.res = 4;
 		this.mainCanvas.addLayer(this.particleLayer);
 

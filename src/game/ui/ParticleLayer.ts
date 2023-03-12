@@ -36,16 +36,10 @@ export interface ParticleDef {
 	onDeath?: (p:Particle)=>void;
 }
 
-export class ParticleLayer extends AbstractCanvasLayer {
-
-	constructor(id: string) {
-		super(id);
-	}
+export class ParticleStore {
 	particles: Particle[] = [];
 	defaultAZ = 0;
 	defaultSize = 2;
-	res = 0;
-
 	addParticle(def:ParticleDef) {
 		let p:Particle = {
 			x: def.x,
@@ -67,6 +61,7 @@ export class ParticleLayer extends AbstractCanvasLayer {
 		if (p.vx === 0 && p.vy === 0 && p.vz === 0 && p.az === 0) p.v = false;
 		this.particles.push(p);
 	}
+
 	update(dt: number) {
 		let remove:number[] = [];
 		for (let i = 0; i < this.particles.length; i++) {
@@ -93,19 +88,40 @@ export class ParticleLayer extends AbstractCanvasLayer {
 			this.particles.pop();
 		}
 	}
+}
+
+export class ParticleLayer extends AbstractCanvasLayer {
+
+	constructor(id: string) {
+		super(id);
+	}
+	res = 0;
+	particles = new ParticleStore()
+
+	addParticle(def:ParticleDef) {
+		this.particles.addParticle(def);
+	}
+	update(dt: number) {
+		this.particles.update(dt);
+	}
 	drawTo(dst: CanvasRenderingContext2D): void {
 		let res      = this.res;
-		for (let particle of this.particles) {
-			dst.fillStyle = particle.color;
-			let x         = particle.x;
-			let y         = particle.y-particle.z;
-			if (res) {
-				x = (x/res|0)*res;
-				y = (y/res|0)*res;
-			}
-			dst.fillRect(x,y,particle.size,particle.size);
+		for (let particle of this.particles.particles) {
+			renderParticle(dst, particle, res);
 		}
 	}
+}
 
-
+export function renderParticle(
+	dst: CanvasRenderingContext2D,
+	particle: Particle,
+	res: number) {
+	dst.fillStyle = particle.color;
+	let x         = particle.x;
+	let y         = particle.y-particle.z;
+	if (res) {
+		x = (x/res|0)*res;
+		y = (y/res|0)*res;
+	}
+	dst.fillRect(x,y,particle.size,particle.size);
 }

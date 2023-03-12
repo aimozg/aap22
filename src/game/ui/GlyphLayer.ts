@@ -5,6 +5,8 @@
 import {AbstractCanvasLayer} from "../../utils/ui/LayeredCanvas";
 import {AnimatedColor, animatedColorToRGB} from "../../utils/ui/canvas";
 import {milliTime} from "../../utils/time";
+import {BitmapFont} from "../../utils/ui/BitmapFont";
+import {XYRect} from "../../utils/grid/geom";
 
 export interface GlyphData {
 	ch: string;
@@ -22,19 +24,28 @@ export interface GlyphSource {
 export class GlyphLayer extends AbstractCanvasLayer {
 	constructor(id: string,
 				public readonly source: GlyphSource,
-	            public readonly font: string,
+	            public readonly font: BitmapFont,
 	            public readonly cellWidth: number,
 	            public readonly cellHeight: number) {
 		super(id);
+		this.scaleX = this.cellWidth/font.charWidth;
+		this.scaleY = this.cellHeight/font.charHeight;
 	}
+	private scaleX: number;
+	private scaleY: number;
 
-	drawTo(dst: CanvasRenderingContext2D): void {
-		dst.font = this.font;
+	drawTo(dst: CanvasRenderingContext2D, visibleRect: XYRect): void {
+		/*dst.font = this.font;
 		dst.textBaseline = "middle";
 		dst.textAlign = "center";
+		*/
 		let source = this.source;
-		for (let row = 0; row < source.height; row++) {
-			for (let col = 0; col < source.width; col++) {
+		let minRow = Math.max(0, (visibleRect.y1/this.cellHeight)|0),
+		    maxRow = Math.min(source.height, 1+(visibleRect.y2/this.cellHeight)|0),
+		    minCol = Math.max(0, (visibleRect.x1/this.cellWidth)|0),
+		    maxCol = Math.min(source.width, 1+(visibleRect.x2/this.cellWidth)|0);
+		for (let row = minRow; row < maxRow; row++) {
+			for (let col = minCol; col < maxCol; col++) {
 				let glyph = source.glyphAt(col, row);
 				if (glyph) this.renderGlyph(dst, glyph, col, row);
 			}
@@ -58,8 +69,13 @@ export class GlyphLayer extends AbstractCanvasLayer {
 			c2d.fillRect(x, y, this.cellWidth, this.cellHeight)
 		}
 		if (glyph.ch && glyph.ch !== ' ') {
+			/*
 			c2d.fillStyle = animatedColorToRGB(glyph.fg, phase).toString();
 			c2d.fillText(glyph.ch, this.cellWidth/2 + x, y + this.cellHeight/2)
+
+			 */
+			let fg = animatedColorToRGB(glyph.fg, phase).toString();
+			this.font.drawChar(c2d, glyph.ch, fg, x, y, this.scaleX, this.scaleY);
 		}
 	}
 }

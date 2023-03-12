@@ -26,3 +26,10 @@ export function pairs2map<K extends PropertyKey,V>(pairs:[K,V][]):Map<K,V> {
 	}
 	return map;
 }
+
+export function getOrPut<K,V>(map:Map<K,V>, key:K, provider:(key:K)=>V): V {
+	if (map.has(key)) return map.get(key)!;
+	let value = provider(key);
+	map.set(key, value);
+	return value;
+}

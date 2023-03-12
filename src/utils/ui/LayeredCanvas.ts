@@ -48,7 +48,7 @@ export abstract class AbstractCanvasLayer {
 
 	visible:boolean = true;
 	fixed:boolean = false;
-	abstract drawTo(dst: CanvasRenderingContext2D): void;
+	abstract drawTo(dst: CanvasRenderingContext2D, visibleRect:XYRect): void;
 }
 
 export class LayeredCanvas {
@@ -176,25 +176,25 @@ export class LayeredCanvas {
 		)
 	}
 	isPointVisible(xy:XY):boolean {
-		return XYRect.includes(this.visibleRect(), xy);
+		return this.visibleRect().includes(xy);
 	}
 	isRectVisible(rect:XYRect):boolean {
 		let vr = this.visibleRect();
-		return XYRect.includes(vr, XYRect.topLeft(rect)) &&
-			XYRect.includes(vr, XYRect.bottomRight(rect));
+		return vr.includes(rect.topLeft) &&
+			vr.includes(rect.bottomRight);
 	}
 	fitToShow(rect:XYRect, canZoomOut:boolean=true, canZoomIn:boolean=true):void {
-		let scaleX = this.viewportWidth / XYRect.fwidth(rect);
-		let scaleY = this.viewportHeight / XYRect.fheight(rect);
+		let scaleX = this.viewportWidth / rect.fwidth;
+		let scaleY = this.viewportHeight / rect.fheight;
 		let zf = Math.min(scaleX, scaleY);
 		if (zf < this.zoomFactor && canZoomOut ||
 			zf > this.zoomFactor && canZoomIn) {
 			this.setZoomFactor(zf);
 		}
-		this.setCenter(XYRect.fcenter(rect));
+		this.setCenter(rect.fcenter());
 	}
 	zoomOutToShow(rect:XYRect, padding:number = 0):void {
-		if (padding) rect = XYRect.expand(rect, padding);
+		if (padding) rect = rect.expand(padding);
 		if (this.isRectVisible(rect)) return;
 		this.fitToShow(rect, true, false);
 	}
@@ -216,12 +216,13 @@ export class LayeredCanvas {
 		c2d.scale(this.zoomFactor, this.zoomFactor);
 		c2d.translate(-this.centerX, -this.centerY);
 		let mainTransform = c2d.getTransform();
+		let visibleRect = this.visibleRect();
 		for (let layer of this.layers) {
 			if (!layer.visible) continue;
 			if (layer.fixed) {
 				c2d.setTransform(fixedTransform);
 			}
-			layer.drawTo(c2d);
+			layer.drawTo(c2d, visibleRect);
 			if (layer.fixed) {
 				c2d.setTransform(mainTransform);
 			}

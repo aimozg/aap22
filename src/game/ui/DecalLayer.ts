@@ -2,6 +2,7 @@
  * Created by aimozg on 08.03.2023.
  */
 import {AbstractCanvasLayer} from "../../utils/ui/LayeredCanvas";
+import {XYRect} from "../../utils/grid/geom";
 
 export interface Decal {
 	x: number;
@@ -12,8 +13,7 @@ export interface Decal {
 
 export class DecalLayer extends AbstractCanvasLayer {
 
-	constructor(id: string,
-	            public pixelSize: number) {
+	constructor(id: string) {
 		super(id);
 	}
 	decals: Decal[] = [];
@@ -24,10 +24,12 @@ export class DecalLayer extends AbstractCanvasLayer {
 		this.decals = [];
 	}
 
-	drawTo(dst: CanvasRenderingContext2D): void {
+	drawTo(dst: CanvasRenderingContext2D, visibleRect: XYRect): void {
 		for (let d of this.decals) {
-			dst.fillStyle = d.color;
-			dst.fillRect(d.x,d.y,d.size,d.size);
+			if (visibleRect.intersects(XYRect.fromWH(d.size, d.size, d.x, d.y))) {
+				dst.fillStyle = d.color;
+				dst.fillRect(d.x, d.y, d.size, d.size);
+			}
 		}
 	}
 

@@ -44,8 +44,8 @@ function toDecal(p:Particle, color:string, size:number) {
 				y: p.y,
 				z: 0.1,
 				vz: Game.fxrng.nextFloat(1,2)*CELLHEIGHT,
-				size: Game.screenManager.particleLayer.defaultSize*2,
-				az: Game.screenManager.particleLayer.defaultAZ/16,
+				size: Game.screenManager.particleLayer.particles.defaultSize*2,
+				az: Game.screenManager.particleLayer.particles.defaultAZ/16,
 				ttl: 1,
 				color: Colors.DARKGRAY
 			});
@@ -67,7 +67,7 @@ export type ParticlePresetId = "blood"|"spark"|"bone";
 export function spawnParticle(
 	preset:ParticlePresetId, x:number, y:number, z:number, vx:number, vy: number, vz:number):ParticleDef {
 	let fxrng = Game.fxrng,
-	    particleLayer = Game.screenManager.particleLayer;
+	    particles = Game.screenManager.particleLayer.particles;
 
 	let pd:ParticleDef = {
 		x: (x+fxrng.nextFloat(0.25,0.75))*CELLWIDTH,
@@ -88,7 +88,7 @@ export function spawnParticle(
 			break;
 		case "spark":
 			pd.color = Colors.WHITE;
-			pd.az = particleLayer.defaultAZ/2;
+			pd.az = particles.defaultAZ/2;
 			pd.ttl = fxrng.nextFloat(0.25,1.0);
 			pd.vx! *= 2;
 			pd.vy! *= 2;
@@ -101,7 +101,7 @@ export function spawnParticle(
 			break;
 		case "bone":
 			pd.color = Colors.WHITE;
-			pd.az = particleLayer.defaultAZ/2;
+			pd.az = particles.defaultAZ/2;
 			pd.ttl = fxrng.nextFloat(0.125,0.25);
 			// pd.size = particleLayer.defaultSize*2;
 			// pd.vx! *= 2;

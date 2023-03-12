@@ -88,7 +88,7 @@ export class ChunkSet {
 					height: height,
 					type: inputChunk.type ?? "room",
 					chance: inputChunk.chance ?? 1,
-					rect: XYRect.fromWH(width, height),
+					rect: XYRect.fromWHint(width, height),
 					exits: {
 						U: [],
 						D: [],

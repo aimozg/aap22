@@ -23,14 +23,14 @@ export function genVisibilityMap(
 	input: LosProvider,
 	start: XY,
 	clear: boolean,
-	vismap: Int8Array = new Int8Array(XYRect.isize(input.rect))
+	vismap: Int8Array = new Int8Array(input.rect.iarea())
 ): Int8Array {
-	let width  = XYRect.iwidth(input.rect);
+	let width  = input.rect.iwidth;
 	// TODO fog of war
 	if (clear) vismap.fill(0);
 	vismap[start.y * width + start.x] = 1;
 
-	XYRect.perimeterForEach(input.rect, xy => {
+	input.rect.perimeterForEach(xy => {
 		let cast = bresenline(start.x, start.y, xy.x, xy.y);
 		for (let i = 1; i < cast.length; i++) {
 			let {x, y}  = cast[i];
@@ -46,7 +46,7 @@ export function genVisibilityMap(
 export function checkLineOfSight(input: LosProvider,
                        xy1: XY,
                        xy2: XY): boolean {
-	let w = XYRect.iwidth(input.rect);
+	let w = input.rect.iwidth;
 	for (let xy of bresenline(xy1.x,xy1.y,xy2.x,xy2.y)) {
 		if (!input.visible(w*xy.y+xy.x)) return false;
 	}

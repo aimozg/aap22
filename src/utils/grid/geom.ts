@@ -29,119 +29,155 @@ export namespace XY {
 	}
 }
 
-export interface XYRect {
-	x1: number;
-	y1: number;
-	x2: number;
-	y2: number;
-}
-export namespace XYRect {
-	export function fwidth(rect:XYRect):number {
-		return rect.x2 - rect.x1;
+export class  XYRect {
+	constructor(
+		public x1: number,
+		public y1: number,
+		public x2: number,
+		public y2: number,
+	) {
+		if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)
+			|| x1 > x2 || y1 > y2) throw new Error(`Invalid XYRect params ${x1};${y1}, ${x2};${y2}`)
 	}
-	export function fheight(rect:XYRect):number {
-		return rect.y2 - rect.y1;
+
+	get fwidth():number {
+		return this.x2 - this.x1;
 	}
-	export function iwidth(rect:XYRect):number {
-		return rect.x2 + 1 - rect.x1;
+	get fheight():number {
+		return this.y2 - this.y1;
 	}
-	export function iheight(rect:XYRect):number {
-		return rect.y2 + 1 - rect.y1;
+	get iwidth():number {
+		return this.x2 + 1 - this.x1;
 	}
-	export function isize(rect:XYRect):number {
-		return iwidth(rect)*iheight(rect);
+	get iheight():number {
+		return this.y2 + 1 - this.y1;
 	}
-	export function fcenter(rect:XYRect):XY {
+	iarea():number {
+		return this.iwidth*this.iheight;
+	}
+	fcenter():XY {
 		return {
-			x: (rect.x1 + rect.x2) / 2,
-			y: (rect.y1 + rect.y2) / 2
+			x: (this.x1 + this.x2) / 2,
+			y: (this.y1 + this.y2) / 2
 		}
 	}
-	export function icenter(rect:XYRect):XY {
-		let c = fcenter(rect);
+	icenter():XY {
+		let c = this.fcenter();
 		c.x|=0;
 		c.y|=0;
 		return c;
 	}
-	export function topLeft(rect:XYRect):XY {
-		return {x:rect.x1,y:rect.y1}
+	get topLeft():XY {
+		return {x:this.x1,y:this.y1}
 	}
-	export function bottomRight(rect:XYRect):XY {
-		return {x:rect.x2,y:rect.y2}
+	get bottomRight():XY {
+		return {x:this.x2,y:this.y2}
 	}
-	export function includes(rect:XYRect, point:XY):boolean {
-		return rect.x1 <= point.x && point.x <= rect.x2 &&
-			rect.y1 <= point.y && point.y <= rect.y2;
+	scale(sx:number, sy:number=sx):XYRect {
+		return new XYRect(
+			this.x1*sx,
+			this.y1*sy,
+			this.x2*sx,
+			this.y2*sy
+		);
 	}
-	export function cells(rect:XYRect):XY[] {
+	includes(point:XY):boolean {
+		return this.x1 <= point.x && point.x <= this.x2 &&
+			this.y1 <= point.y && point.y <= this.y2;
+	}
+	includesRect(rect:XYRect):boolean {
+		return this.x1 <= rect.x1 && rect.x2 <= this.x2 &&
+			this.y1 <= rect.y1 && rect.y2 <= this.y2;
+	}
+	intersects(rect:XYRect):boolean {
+		return this.x1 <= rect.x2 && rect.x1 <= this.x2 &&
+			this.y1 <= rect.y2 && rect.y1 <= this.y2
+	}
+	intersection(rect:XYRect):XYRect|null {
+		let x1 = Math.max(this.x1,rect.x1);
+		let y1 = Math.max(this.y1,rect.y1);
+		let x2 = Math.min(this.x2,rect.x2);
+		let y2 = Math.min(this.y2,rect.y2);
+		if (x1 > x2 || y1 > y2) return null;
+		return new XYRect(x1, y1, x2, y2);
+	}
+	intCells():XY[] {
 		let result:XY[] = [];
-		for (let y = rect.y1; y <= rect.y2; y++)
-			for (let x = rect.x1; x <= rect.x2; x++)
+		for (let y = this.y1; y <= this.y2; y++)
+			for (let x = this.x1; x <= this.x2; x++)
 				result.push({x,y});
 		return result;
 	}
-	export function forEach(rect:XYRect, iter:(cell:XY)=>void) {
-		for (let y = rect.y1; y <= rect.y2; y++)
-			for (let x = rect.x1; x <= rect.x2; x++)
+	forEachXY(iter:(cell:XY)=>void) {
+		for (let y = this.y1; y <= this.y2; y++)
+			for (let x = this.x1; x <= this.x2; x++)
 				iter({x,y});
 	}
-	export function map<O>(rect:XYRect, iter:(cell:XY)=>O):O[] {
+	mapXY<O>(iter:(cell:XY)=>O):O[] {
 		let result:O[] = [];
-		for (let y = rect.y1; y <= rect.y2; y++)
-			for (let x = rect.x1; x <= rect.x2; x++)
+		for (let y = this.y1; y <= this.y2; y++)
+			for (let x = this.x1; x <= this.x2; x++)
 				result.push(iter({x,y}));
 		return result;
 	}
-	export function perimeter(rect:XYRect): XY[] {
+	perimeter(): XY[] {
 		let result:XY[] = [];
-		perimeterForEach(rect,xy=> {result.push(xy)});
+		this.perimeterForEach(xy=> {result.push(xy)});
 		return result;
 	}
 
 	/**
 	 * Iterate coordinates topleft->topright->bottomright->bottomleft
-	 * @param rect
 	 * @param callback Return exactly `false` to stop iteration
 	 */
-	export function perimeterForEach(rect:XYRect, callback:(cell:XY)=>any): void {
-		let {x1,y1,x2,y2} = rect;
+	perimeterForEach(callback:(cell:XY)=>any): void {
+		let {x1,y1,x2,y2} = this;
 		for (let x = x1; x <= x2; x++) if (callback({x,y:y1}) === false) return;
 		for (let y = y1+1; y <= y2; y++) if (callback({x:x2,y}) === false) return;
 		for (let x = x2-1; x >= x1; x--) if (callback({x,y:y2}) === false) return;
 		for (let y = y2-1; y > y1; y--) if (callback({x:x1,y}) === false) return;
 	}
-	export function fromWH(width:number, height:number, top:number=0, left:number=0):XYRect {
-		return {
-			x1: left,
-			y1: top,
-			x2:left+width-1,
-			y2:top+height-1
-		}
+	static fromWH(width: number, height: number, x1: number = 0, y1: number = 0):XYRect {
+		return new XYRect(
+			x1,
+			y1,
+			x1+width,
+			y1+height
+		)
 	}
-	export function fromCorners(topLeft:XY, bottomRight:XY):XYRect {
-		return {
-			x1:topLeft.x,
-			y1:topLeft.y,
-			x2:bottomRight.x,
-			y2:bottomRight.y,
-		}
+	static fromWHint(width: number, height: number, x1: number = 0, y1: number = 0):XYRect {
+		return new XYRect(
+			x1,
+			y1,
+			x1+width-1,
+			y1+height-1
+		)
 	}
-	export function fromCenter(center:XY, width:number, height:number):XYRect {
+	static fromCorners(topLeft:XY, bottomRight:XY):XYRect {
+		return new XYRect(
+			topLeft.x,
+			topLeft.y,
+			bottomRight.x,
+			bottomRight.y,
+		);
+	}
+	static fromCenter(center:XY, width:number, height:number):XYRect {
 		width /= 2;
 		height /= 2;
-		return {
-			x1: center.x - width,
-			x2: center.x + width,
-			y1: center.y - height,
-			y2: center.y - height
-		}
+		return new XYRect(
+			center.x - width,
+			center.y - height,
+			center.x + width,
+			center.y + height
+		);
 	}
-	export function expand(base:XYRect, dx:number, dy:number=dx):XYRect {
-		return {
-			x1: base.x1-dx,
-			x2:base.x2+dx,
-			y1:base.x1-dy,
-			y2:base.y2+dy
-		}
+
+	expand(dx: number, dy: number = dx): XYRect {
+		return new XYRect(
+			this.x1-dx,
+			this.x1-dy,
+			this.x2+dx,
+			this.y2+dy
+		);
 	}
 }
