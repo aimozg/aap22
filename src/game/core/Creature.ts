@@ -1,76 +1,107 @@
 import {MapObject} from "./MapObject";
 import {GlyphData} from "../../utils/ui/GlyphLayer";
-import * as tinycolor from "tinycolor2";
-import {EntityEffect} from "../Entity";
 import {coerce} from "../../utils/math/utils";
 import {Item} from "./Item";
+import {ObjectComponent} from "../ecs/ObjectComponent";
+import {ChildGameObject, GameObject} from "../ecs/GameObject";
+import {BuffableStat, EntityData, RawStat} from "../ecs/decorators";
+
+export interface CreatureStatNames {
+	level: number;
+	ap: number;
+	hp: number;
+	hpMax: number;
+	naturalAim: number;
+	naturalDodge: number;
+	naturalDamage: number;
+	speed: number;
+}
+export type CreatureStatId = keyof CreatureStatNames;
+
+declare module "../ecs/ObjectStat" {
+	export interface ObjectStatNames extends CreatureStatNames {}
+}
 
 export type CreatureTag =
 	"player"|"boss"|
 	"undead"|"beast"|"demon"|"construct"|"humanoid"|
 	"bones";
 
-export interface CreaturePrototype {
-	name: string;
-	ch: string;
-	color: string;
-	tags?: CreatureTag[];
-
-	level: number;
-	speed: number;
-	hp: number;
-	aim: number;
-	damage: number;
-	dodge: number;
-}
-
-export class Creature extends MapObject {
-	constructor(
-		proto: CreaturePrototype,
-		...effects: EntityEffect<Creature>[]
+export abstract class Creature extends MapObject {
+	protected constructor(
+		clsid: string,
+		bpid: string|null,
+		uuid: number,
+		...components: ObjectComponent<Creature>[]
 	) {
-		super();
-		this.name   = proto.name;
-		this.color  = proto.color;
-		this.glyph  = {
-			ch: proto.ch,
-			// TODO blink if has special condition
-			fg: tinycolor(this.color)
-		}
-		this.tags = new Set(proto.tags);
-		this.level  = proto.level;
-		this.hp     = proto.hp;
-		this.hpMax         = proto.hp;
-		this.naturalAim    = proto.aim;
-		this.naturalDamage = proto.damage;
-		this.naturalDodge  = proto.dodge;
-		this.speed         = proto.speed;
-
-		for (let effect of effects) {
-			effect.addTo(this);
+		super(clsid, bpid, uuid);
+		for (let component of components) {
+			component.addTo(this);
 		}
 	}
 
+	saveChildren(): ChildGameObject[] {
+		let result: ChildGameObject[] = [];
+		if (this.weapon) result.push(["eq-weapon",this.weapon]);
+		if (this.armor) result.push(["eq-armor",this.armor]);
+		this.inventory.forEach((item,index)=>{
+			if (item) result.push(["inv-"+index,item]);
+		})
+		return result;
+	}
+	loadChild(pos: string, child: GameObject) {
+		pos = String(pos);
+		if (child instanceof Item) {
+			if (pos === "eq-weapon") {
+				// TODO silently
+				this.setWeapon(child);
+				return;
+			}
+			if (pos === "eq-armor") {
+				// TODO silently
+				this.setArmor(child);
+				return;
+			}
+			let inv = pos.match(/^inv-(\d+)$/);
+			if (inv) {
+				this.inventory[parseInt(inv[1])] = child;
+				return;
+			}
+		}
+		super.loadChild(pos, child);
+	}
+
+	@EntityData()
 	name: string;
 	color: string;
-	glyph: GlyphData;
+	glyph: GlyphData = {ch: '@', fg: '#ffffff'};
 	z               = MapObject.Z_CREATURE;
 	walkable        = false;
+	@EntityData()
 	faction: string = "monster";
-	tags: Set<CreatureTag>;
+	@EntityData()
+	tags: Set<CreatureTag> = new Set();
 
 	//-------//
 	// STATS //
 	//-------//
 
+	@RawStat(1)
 	level: number;
-	ap: number = 0;
-	speed: number;
+	@RawStat(0)
+	ap: number;
+	@BuffableStat(0)
+	readonly speed: number;
+	@RawStat(1)
 	hp: number;
-	hpMax: number;
-	naturalAim: number;
-	naturalDamage: number;
-	naturalDodge: number;
+	@BuffableStat(0)
+	readonly hpMax: number;
+	@BuffableStat(0)
+	readonly naturalAim: number;
+	@BuffableStat(0)
+	readonly naturalDamage: number;
+	@BuffableStat(0)
+	readonly naturalDodge: number;
 
 	//-------//
 	// ITEMS //
@@ -118,6 +149,12 @@ export class Creature extends MapObject {
 		this.weapon?.unequipped();
 		this.weapon = weapon;
 		weapon?.equipped(this);
+	}
+	setArmor(armor:Item|null) {
+		if (armor && !armor.armor) throw new Error(`Item ${armor} is not an armor`);
+		this.armor?.unequipped();
+		this.armor = armor;
+		armor?.equipped(this);
 	}
 	addItem(item:Item):boolean {
 		// TODO inventory size

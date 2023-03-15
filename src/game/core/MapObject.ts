@@ -2,13 +2,18 @@
  * Created by aimozg on 05.03.2023.
  */
 
-import {Entity} from "../Entity";
+import {GameObject} from "../ecs/GameObject";
 import {XY} from "../../utils/grid/geom";
 import {Cell, Level} from "./Level";
 import {GlyphData} from "../../utils/ui/GlyphLayer";
 import {objectClassName} from "../../utils/types";
 
-export abstract class MapObject extends Entity {
+export abstract class MapObject extends GameObject {
+
+	protected constructor(clsid: string, bpid: string | null, uuid: number) {
+		super(clsid, bpid, uuid);
+	}
+
 	pos: XY = {x:0,y:0};
 	z = 0;
 	declare parentEntity: Level|null;

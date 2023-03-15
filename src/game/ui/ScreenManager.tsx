@@ -7,7 +7,7 @@ import {GameState} from "../GameState";
 import {createElement, removeChildren} from "../../utils/ui/dom";
 import {substitutePattern} from "../../utils/string";
 import Chars from "../../utils/ui/chars";
-import {Entity} from "../Entity";
+import {GameObject} from "../ecs/GameObject";
 import {Creature} from "../core/Creature";
 import {objectClassName} from "../../utils/types";
 import jsx from "texsaur";
@@ -18,7 +18,6 @@ import {ParticlePresetId, spawnParticle} from "./ParticlePresets";
 import {DroppedItem, Item, ItemRarity} from "../core/Item";
 import {Corpse} from "../objects/Corpse";
 import BitmapFontIBMBIOS from "../../../assets/ibmbios";
-import {types} from "sass";
 
 export let FONTFACE = "IBMBIOS";
 export let FONTSIZE = "32px";
@@ -316,7 +315,7 @@ export class ScreenManager {
 		return status;
 	}
 
-	formatTag(obj:Entity, key:string):string {
+	formatTag(obj:GameObject, key:string):string {
 		if (obj instanceof Creature) {
 			switch (key) {
 				case "":
@@ -343,7 +342,7 @@ export class ScreenManager {
 		}
 		return `{error;Unknown tag ${objectClassName(obj)}.${key}}`
 	}
-	logsub(message: string, substitutions: Record<string, string | Entity | number>) {
+	logsub(message: string, substitutions: Record<string, string | GameObject | number>) {
 		message = substitutePattern(message, str=>{
 			if (str.includes(';')) return undefined;
 			let parts = str.split('.');
@@ -351,7 +350,7 @@ export class ScreenManager {
 			let propname = parts[1] ?? "";
 			let object = substitutions[objname];
 			if (!object) return undefined;
-			if (object instanceof Entity) return this.formatTag(object, propname);
+			if (object instanceof GameObject) return this.formatTag(object, propname);
 			if (typeof object === "number") {
 				// TODO use propname to format the number
 				return String(object);

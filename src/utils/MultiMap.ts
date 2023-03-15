@@ -69,6 +69,13 @@ export class MultiMap<K,V> {
 			values.forEach(value=>callback.call(thisarg, value, key, this));
 		})
 	}
+	map<O>(callback:(value:V, key:K, map:MultiMap<K,V>)=>O): O[] {
+		let result:O[] = [];
+		this.#map.forEach((values,key)=>{
+			values.forEach(value=>result.push(callback(value, key, this)));
+		})
+		return result;
+	}
 	some<THISARG>(callback:(this:THISARG, value:V, key:K, map:MultiMap<K,V>)=>boolean, thisarg?:THISARG) {
 		for (let [k,vs] of this.#map.entries()) {
 			for (let v of vs) {

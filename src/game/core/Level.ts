@@ -2,7 +2,7 @@
  * Created by aimozg on 05.03.2023.
  */
 
-import {Entity} from "../Entity";
+import {ChildGameObject, GameObject} from "../ecs/GameObject";
 import {MultiMap} from "../../utils/MultiMap";
 import {MapObject} from "./MapObject";
 import {XY, XYRect} from "../../utils/grid/geom";
@@ -14,6 +14,10 @@ import {GlyphData} from "../../utils/ui/GlyphLayer";
 import {Creature} from "./Creature";
 import {Dir8List, xyPlusDir} from "../../utils/grid/grid";
 import {LosProvider} from "../../utils/grid/los";
+import {UUID} from "../ecs/utils";
+import {EntityClassLoader} from "../ecs/EntityClassLoader";
+import {EntityJson} from "../ecs/EntityLoader";
+import {EntityData} from "../ecs/decorators";
 
 export class Cell {
 	constructor(
@@ -72,19 +76,47 @@ export class Room extends XYRect {
 	}
 }
 
-export class Level extends Entity implements LosProvider {
-	constructor(public readonly width: number,
-	            public readonly height: number) {
-		super();
-		this.cells = createArray(this.width * this.height, (i) =>
+export class Level extends GameObject implements LosProvider {
+	static readonly CLSID = "Level";
+
+	constructor(width: number,
+	            height: number,
+	            uuid: number = UUID()) {
+		super(Level.CLSID, null, uuid);
+		this.height = height;
+		this.width  = width;
+		this.cells  = createArray(this.width * this.height, (i) =>
 			new Cell(this, this.i2xy(i)));
-		this.rect = XYRect.fromWHint(this.width, this.height)
+		this.rect   = XYRect.fromWHint(this.width, this.height)
 	}
 
+	@EntityData()
+	public readonly width: number;
+	@EntityData()
+	public readonly height: number;
 	readonly mobjmap = new MultiMap<number, MapObject>()
 	readonly cells: Cell[];
 	readonly rooms: Room[] = [];
 	readonly rect:XYRect;
+	saveChildren(): ChildGameObject[] {
+		return this.mobjmap.map(obj=>[obj.pos,obj]);
+	}
+	loadChild(pos: XY, child: GameObject) {
+		if (child instanceof MapObject) {
+			this.addObject(child, pos);
+		}
+	}
+
+	loadCustomData(data: Record<string, any>): void {
+		(data.tiles as number[]).forEach((tile,i)=>{
+			this.cells[i].tile = Tiles.byId(tile);
+		})
+	}
+
+	saveCustomData(data: Record<string, any>): void {
+		data.tiles = this.cells.map(cell=>cell.tile.id);
+	}
+
 
 	i2xy(i: number): XY {
 		return {x: (i % this.width), y: (i / this.width) | 0};
@@ -142,24 +174,14 @@ export class Level extends Entity implements LosProvider {
 	// MODIFIERS //
 	//-----------//
 	addObject(obj: MapObject, pos: XY) {
+		obj.setParentObject(this);
 		obj.moved(pos);
-		this.addChild(obj);
+		this.mobjmap.set(this.xy2i(obj.pos.x, obj.pos.y), obj);
 	}
-
-	addChild(e: MapObject) {
-		super.addChild(e);
-		this.mobjmap.set(this.xy2i(e.pos.x,e.pos.y), e);
-	}
-
 	removeObject(obj: MapObject) {
-		this.removeChild(obj);
+		obj.setParentObject(null);
+		this.mobjmap.delete(this.xy2i(obj.pos.x, obj.pos.y), obj);
 	}
-
-	removeChild(e: MapObject) {
-		this.mobjmap.delete(this.xy2i(e.pos.x,e.pos.y), e);
-		super.removeChild(e);
-	}
-
 	moveObject(obj: MapObject, newPos: XY) {
 		if (obj.parentEntity !== this) throw new Error(`Bad parent ${obj.parentEntity}`);
 		let oldPos = obj.pos;
@@ -243,6 +265,13 @@ export class Level extends Entity implements LosProvider {
 		for (let x = x1 + 1; x < x2; x++) {
 			this.setTile({x, y: y1}, tile);
 			this.setTile({x, y: y2}, tile);
+		}
+	}
+
+	static Loader:EntityClassLoader<Level> = {
+		clsid: Level.CLSID,
+		create(e: EntityJson): Level {
+			return new Level(e.data!["width"], e.data!["height"], e.uuid);
 		}
 	}
 }

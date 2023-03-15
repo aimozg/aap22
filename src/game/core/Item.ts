@@ -2,11 +2,14 @@
  * Created by aimozg on 10.03.2023.
  */
 
-import {Entity} from "../Entity";
+import {ChildGameObject, GameObject} from "../ecs/GameObject";
 import {GlyphData} from "../../utils/ui/GlyphLayer";
 import {MapObject} from "./MapObject";
 import {Colors} from "../../utils/ui/canvas";
 import {Creature} from "./Creature";
+import {UUID} from "../ecs/utils";
+import {BlueprintClassLoader} from "../ecs/EntityClassLoader";
+import {EntityJson, EntityLoader} from "../ecs/EntityLoader";
 
 export enum ItemRarity {
 	NORMAL,
@@ -30,7 +33,8 @@ export interface ArmorDef {
 	defense: number;
 }
 
-export interface ItemDef {
+export interface ItemBlueprint {
+	bpid: string;
 	name: string;
 	ch: string;
 	rarity?: ItemRarity;
@@ -50,17 +54,18 @@ export class ArmorComponent {
 	}
 	defense: number;
 }
-export class Item extends Entity {
-	constructor(def: ItemDef) {
-		super();
-		this.rarity = def.rarity ?? ItemRarity.NORMAL;
-		this.name = def.name;
+export class Item extends GameObject {
+	static readonly CLSID = "Item";
+	constructor(blueprint: ItemBlueprint, uuid: number = UUID()) {
+		super(Item.CLSID, blueprint.bpid, uuid);
+		this.rarity = blueprint.rarity ?? ItemRarity.NORMAL;
+		this.name = blueprint.name;
 		this.glyph = {
-			ch: def.ch,
+			ch: blueprint.ch,
 			fg: ItemRarityToColor[this.rarity]
 		};
-		this.weapon = def.weapon ? new WeaponComponent(def.weapon) : null;
-		this.armor = def.armor ? new ArmorComponent(def.armor) : null;
+		this.weapon = blueprint.weapon ? new WeaponComponent(blueprint.weapon) : null;
+		this.armor = blueprint.armor ? new ArmorComponent(blueprint.armor) : null;
 	}
 
 	rarity: ItemRarity;
@@ -71,17 +76,33 @@ export class Item extends Entity {
 	armor: ArmorComponent|null;
 
 	equipped(host:Creature) {
-		this.setParent(host);
+		this.setParentObject(host);
 	}
 	unequipped() {
-		this.setParent(null);
+		this.setParentObject(null);
+	}
+
+	saveChildren(): ChildGameObject[] {
+		return [];
+	}
+
+	static Loader = new class extends BlueprintClassLoader<Item, ItemBlueprint> {
+		createFromBlueprint(ctx: EntityLoader, bp: ItemBlueprint, uuid: number, e: EntityJson): Item {
+			return new Item(bp, uuid);
+		}
+		constructor() {super(Item.CLSID);}
 	}
 }
 
 export class DroppedItem extends MapObject {
-	constructor(public item: Item) {
-		super();
-		item.setParent(this);
+	constructor(public item: Item,
+	            uuid: number = UUID()) {
+		super("DroppedItem", null, uuid);
+		item.setParentObject(this);
+	}
+
+	saveChildren(): ChildGameObject[] {
+		return [[0,this.item]];
 	}
 
 	z = MapObject.Z_ITEM;

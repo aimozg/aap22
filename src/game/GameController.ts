@@ -7,8 +7,8 @@ import {XY} from "../utils/grid/geom";
 import {Creature} from "./core/Creature";
 import {Player} from "./core/Player";
 import {LogManager} from "../utils/logging/LogManager";
-import {MonsterAI} from "./monster/MonsterAI";
-import {Entity} from "./Entity";
+import {MonsterAI} from "./combat/MonsterAI";
+import {GameObject} from "./ecs/GameObject";
 import {Game} from "./Game";
 import {DamageType, DamageTypes} from "./combat/DamageType";
 import {Corpse} from "./objects/Corpse";
@@ -128,7 +128,7 @@ export let GameController = new class {
 			this.dirty       = false;
 		}
 	}
-	log(message:string, substitutions?:Record<string, string|Entity|number>) {
+	log(message:string, substitutions?:Record<string, string|GameObject|number>) {
 		if (substitutions) Game.screenManager.logsub(message, substitutions);
 		else Game.screenManager.log(message);
 	}
@@ -166,7 +166,7 @@ export let GameController = new class {
 
 	doAI(creature:Creature) {
 		logger.debug("doAI {}", creature);
-		let ai = creature.findEffect(MonsterAI);
+		let ai = creature.findComponent(MonsterAI);
 		if (!ai) {
 			logger.warn("creature {} has no AI", creature);
 			this.actSkip(creature);

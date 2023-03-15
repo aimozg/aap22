@@ -8,6 +8,15 @@ import {InputManager} from "./ui/InputManager";
 import {GameController} from "./GameController";
 import {XorWowRandom} from "../utils/math/XorWowRandom";
 import {Random} from "../utils/math/Random";
+import {EntityLoader} from "./ecs/EntityLoader";
+import {Level} from "./core/Level";
+import {Player} from "./core/Player";
+import {Item} from "./core/Item";
+import {Monster} from "./core/Monster";
+import {WeaponLib} from "./data/WeaponLib";
+import {LevelExit} from "./objects/LevelExit";
+import {MonsterLib} from "./data/MonsterLib";
+import {MonsterAI} from "./combat/MonsterAI";
 
 
 export namespace Game {
@@ -19,8 +28,18 @@ export namespace Game {
 	export let screenManager: ScreenManager;
 	export let inputManager: InputManager;
 	export const gameController = GameController;
+	export const entityLoader = new EntityLoader();
 
 	export async function start() {
+		entityLoader.registerClassLoader(Item.Loader);
+		Item.Loader.registerBlueprints(Object.values(WeaponLib));
+		entityLoader.registerClassLoader(Level.Loader);
+		entityLoader.registerClassLoader(LevelExit.Loader);
+		entityLoader.registerClassLoader(Monster.Loader);
+		Monster.Loader.registerBlueprints(Object.values(MonsterLib));
+		entityLoader.registerClassLoader(MonsterAI.Loader);
+		entityLoader.registerClassLoader(Player.Loader);
+
 		// TODO main menu
 		screenManager = new ScreenManager();
 		inputManager = new InputManager();

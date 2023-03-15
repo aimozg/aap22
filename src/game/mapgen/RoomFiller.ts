@@ -5,12 +5,12 @@
 import {Level, Room} from "../core/Level";
 import {GameState} from "../GameState";
 import {LevelExit} from "../objects/LevelExit";
-import {Creature} from "../core/Creature";
 import {MonsterLib} from "../data/MonsterLib";
-import {MonsterAI} from "../monster/MonsterAI";
+import {MonsterAI} from "../combat/MonsterAI";
 import {LogManager} from "../../utils/logging/LogManager";
 import {Item} from "../core/Item";
 import {WeaponLib} from "../data/WeaponLib";
+import {Monster} from "../core/Monster";
 
 let logger = LogManager.loggerFor("RoomFiller");
 
@@ -23,8 +23,9 @@ function fillRoom(level:Level, room:Room, threatLevel:number) {
 		if (!cell) {
 			logger.warn("No empty cells in room {}", room);
 		} else {
-			let creature = new Creature(
+			let creature = new Monster(
 				proto,
+				undefined,
 				new MonsterAI());
 			if (maprng.nextBoolean(0.25)) {
 				let id = maprng.pickWeightedTuple([

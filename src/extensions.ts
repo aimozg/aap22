@@ -3,6 +3,10 @@
  */
 
 declare global {
+	interface ErrorConstructor {
+		new(message?: string, options?:{cause?:Error}): Error;
+	}
+
 	interface JoinToStringOptions<T> {
 		last?:string;
 		prefix?:string;

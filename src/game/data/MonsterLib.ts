@@ -2,34 +2,38 @@
  * Created by aimozg on 06.03.2023.
  */
 
-import {CreaturePrototype} from "../core/Creature";
 import {Colors} from "../../utils/ui/canvas";
+import {MonsterBlueprint} from "../core/Monster";
 
 export namespace MonsterLib {
-	export let Zombie:CreaturePrototype = {
+	export let Zombie:MonsterBlueprint   = {
+		bpid: "zombie",
 		name: "zombie",
 		ch: 'z',
 		color: Colors.BROWN,
 		tags: ["undead"],
-
-		level: 1,
-		speed: 3,
-		hp: 5,
-		aim: 50,
-		damage: 4,
-		dodge: 0,
+		stats: {
+			level: 1,
+			speed: 3,
+			hpMax: 5,
+			naturalAim: 50,
+			naturalDamage: 4,
+			naturalDodge: 0
+		},
 	};
-	export let Skeleton:CreaturePrototype = {
+	export let Skeleton:MonsterBlueprint = {
+		bpid: "skeleton",
 		name: "skeleton",
 		ch: 's',
 		color: Colors.WHITE,
 		tags: ["undead","bones"],
-
-		level: 1,
-		speed: 4,
-		hp: 3,
-		aim: 85,
-		damage: 2,
-		dodge: 15
+		stats: {
+			level: 1,
+			speed: 4,
+			hpMax: 3,
+			naturalAim: 85,
+			naturalDamage: 2,
+			naturalDodge: 15
+		}
 	};
 }
