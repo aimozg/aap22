@@ -3,7 +3,7 @@ import {EntityClassLoader} from "./EntityClassLoader";
 import {GameObject} from "./GameObject";
 import {Effect} from "./Effect";
 import {objectClassName, objectToString} from "../../utils/types";
-import {getEntityDataEntries} from "./decorators";
+import {EntityDataDescriptor, getEntityDataDescriptors} from "./decorators";
 import {StatId} from "./ObjectStat";
 import {ObjectComponent} from "./ObjectComponent";
 
@@ -40,7 +40,19 @@ export class EntityLoader {
 		this.classLoaders.set(c.clsid, c);
 	}
 
-	private path = ["$"];
+	private path:string[] = [];
+	private references:{
+		target:Entity,
+		context:string,
+		field:string,
+		uuid:number
+	}[];
+	private entities = new Map<number,Entity>();
+	private clear() {
+		this.path = [];
+		this.references = [];
+		this.entities.clear();
+	}
 
 	private enter(key: string) {
 		this.path.push(key);
@@ -71,18 +83,27 @@ export class EntityLoader {
 		}
 		return result;
 	}
-	serialize(entity: Entity, key?: string): EntityJson {
+	serializeRoot(root: Entity): EntityJson {
+		this.clear();
+		let output = this.serializeEntity(root,"$");
+		this.clear();
+		return output;
+	}
+	serializeEntity(entity: Entity, key?: string): EntityJson {
 		if (key) this.enter(key);
 		let out: EntityJson = {
 			clsid: entity.clsid,
 			uuid: entity.uuid
 		}
 		if (entity.bpid) out.bpid = entity.bpid;
-		let d = getEntityDataEntries(entity);
-		if (d.length > 0 || entity.saveCustomData) {
+		let datas = getEntityDataDescriptors(entity);
+		if (datas.length > 0 || entity.saveCustomData) {
 			out.data = {};
-			for (let [k,v] of d) {
-				out.data[k] = this.serializeValue(v);
+			for (let d of datas) {
+				this.enter(d.field);
+				let value         = (entity as any)[d.field];
+				out.data[d.name] = this.serializeDataField(value, d);
+				this.exit(d.field);
 			}
 			entity.saveCustomData?.(out.data);
 		}
@@ -94,13 +115,25 @@ export class EntityLoader {
 		if (key) this.exit(key);
 		return out;
 	}
+	private serializeDataField(value:any, descriptor:EntityDataDescriptor):any {
+		switch (descriptor.type) {
+			case "clone":
+				return this.serializeValue(value);
+			case "reference":
+				if (value) {
+					if (!(value instanceof Entity)) this.error(`Not an entity: ${value}`);
+					return value.uuid;
+				}
+				return null;
+		}
+	}
 
 	private writeObjectData(obj: GameObject, out: EntityJson) {
 		if (obj.components.length > 0) {
-			out.components = obj.components.map(c => this.serialize(c, 'Component#' + c.uuid));
+			out.components = obj.components.map(c => this.serializeEntity(c, 'Component#' + c.uuid));
 		}
 		if (obj.effects.length > 0) {
-			out.effects = obj.effects.map(e => this.serialize(e, 'Effect#' + e.uuid));
+			out.effects = obj.effects.map(e => this.serializeEntity(e, 'Effect#' + e.uuid));
 		}
 		if (obj.stats.size > 0) {
 			out.stats = {};
@@ -112,7 +145,7 @@ export class EntityLoader {
 		if (c.length > 0) {
 			out.children = c.map(([pos, child]) => [
 				pos,
-				this.serialize(child, 'Child#' + pos)
+				this.serializeEntity(child, 'Child#' + pos)
 			])
 		}
 	}
@@ -126,7 +159,23 @@ export class EntityLoader {
 		}
 	}
 
-	deserialize(input: EntityJson, key?: string): Entity {
+	deserializeRoot(rootJson: EntityJson): Entity {
+		this.clear();
+		let root = this.deserializeEntity(rootJson,"$");
+		this.enter("[references]");
+		this.references.forEach(reference=>{
+			let entity = this.entities.get(reference.uuid);
+			if (!entity) {
+				this.error(`Property ${reference.context} refers unknown entity #${reference.uuid}`)
+			} else {
+				(reference.target as any)[reference.field] = entity;
+			}
+		})
+		this.exit("[references]");
+		this.clear();
+		return root;
+	}
+	deserializeEntity(input: EntityJson, key?: string): Entity {
 		if (key) this.enter(key);
 		let clsid       = input.clsid;
 		let bpid        = input.bpid;
@@ -134,23 +183,63 @@ export class EntityLoader {
 		this.requireType(clsid,"string","[clsid]");
 		if (bpid) this.requireType(bpid,"string","[bpid]");
 		this.requireType(uuid,"number","[uuid]");
+		if (this.entities.has(uuid)) {
+			this.error(`Duplicate entity #${uuid}`);
+		}
 		let classLoader = this.classLoaders.get(clsid);
-		if (!classLoader) this.error(`unknown entity class '${clsid}'`);
+		if (!classLoader) this.error(`unknown entity #${uuid} class '${clsid}'`);
 		let entity: Entity;
 		try {
 			entity = classLoader.create(input, this);
 		} catch (e) {
 			this.error(e);
 		}
+		if (input.data) {
+			this.enter("data");
+			this.requireType(input.data, "object");
+			try {
+				entity.loadCustomData?.(input.data);
+			} catch (e) {
+				this.error(e);
+			}
+			let descriptors = getEntityDataDescriptors(entity);
+			for (let descriptor of descriptors) {
+				this.enter(descriptor.field);
+				let value:any = input.data[descriptor.name];
+				switch (descriptor.type) {
+					case "clone":
+						this.deserializeValue(entity,descriptor.field,value);
+						break;
+					case "reference":
+						if (value !== null) {
+							this.requireType(value, "number", "uuid");
+							this.deserializeReference(entity, descriptor.field, value as number);
+						}
+						break;
+					default:
+						this.error(`Invalid EntityDataDescriptor ${descriptor.type}`);
+				}
+				this.exit(descriptor.field);
+			}
+			this.exit("data")
+		}
 		if (entity instanceof GameObject) {
 			this.deserializeObjectFields(entity, input);
 		} else if (entity instanceof Effect) {
 			this.deserializeEffectFields(entity, input);
 		} else this.error(`Cannot deserialize ${objectClassName(entity)}`);
+		this.entities.set(uuid, entity);
 		if (key) this.exit(key);
 		return entity;
 	}
-
+	deserializeReference(target:Entity, field:string, uuid:number) {
+		this.references.push({
+			target,
+			field,
+			uuid,
+			context:this.context
+		})
+	}
 	deserializeValue(entity:Entity, key:string, value:any) {
 		// TODO either support nested complex values, or throw error on their serialization attempts.
 		let oldValue = (entity as any)[key];
@@ -167,19 +256,6 @@ export class EntityLoader {
 		} else (entity as any)[key] = structuredClone(value);
 	}
 	private deserializeEffectFields(effect: Effect<any>, input: EntityJson) {
-		if (input.data) {
-			this.enter("data");
-			this.requireType(input.data, "object");
-			try {
-				(effect as Entity).loadCustomData?.(input.data);
-			} catch (e) {
-				this.error(e);
-			}
-			for (let [k, v] of Object.entries(input.data)) {
-				this.deserializeValue(effect,k,v);
-			}
-			this.exit("data")
-		}
 		if (input.stats) {
 			this.enter("stats");
 			this.requireType(input.stats, "object");
@@ -193,25 +269,12 @@ export class EntityLoader {
 	}
 
 	private deserializeObjectFields(object: GameObject, input: EntityJson) {
-		if (input.data) {
-			this.enter("data");
-			this.requireType(input.data, "object");
-			try {
-				(object as Entity).loadCustomData?.(input.data);
-			} catch (e) {
-				this.error(e);
-			}
-			for (let [k, v] of Object.entries(input.data)) {
-				this.deserializeValue(object,k,v);
-			}
-			this.exit("data");
-		}
 		if (input.components) {
 			this.enter("components")
 			this.requireType(input.components, "array");
 			for (let i = 0; i < input.components.length; i++) {
 				this.enter(String(i));
-				let component = this.deserialize(input.components[i]);
+				let component = this.deserializeEntity(input.components[i]);
 				if (!(component instanceof ObjectComponent)) {
 					this.error(`Expected ObjectComponent, got ${component.clsid}`);
 				}
@@ -225,7 +288,7 @@ export class EntityLoader {
 			this.requireType(input.effects, "array");
 			for (let i = 0; i < input.effects.length; i++) {
 				this.enter(String(i));
-				let effect = this.deserialize(input.effects[i]);
+				let effect = this.deserializeEntity(input.effects[i]);
 				if (!(effect instanceof Effect)) {
 					this.error(`Expected Effect, got ${effect.clsid}`);
 				}
@@ -255,7 +318,7 @@ export class EntityLoader {
 				let [pos,jchild] = entry;
 				let spos = objectToString(pos);
 				this.enter(spos);
-				let child = this.deserialize(jchild);
+				let child = this.deserializeEntity(jchild);
 				if (!(child instanceof GameObject)) {
 					this.error(`Expected GameObject, got ${child.clsid}`);
 				}

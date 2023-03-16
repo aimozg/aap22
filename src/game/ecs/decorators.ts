@@ -47,19 +47,38 @@ export function initStatBaseValuesFromMetadata(object:GameObject) {
 	});
 }
 
-/** type: string[] */
+export interface EntityDataDescriptor {
+	/** Field/property name in the Entity */
+	field:string;
+	/** Key in serialized data */
+	name:string;
+	type:"clone"|"reference";
+}
+/** type: EntityDataDescriptor[] */
 export let MetadataKeyEntityData = Symbol("EntityData");
 
-export function EntityData(): PropertyDecorator {
+export function EntityData(serializedName?:string): PropertyDecorator {
 	return (target: Entity, propertyKey:string) => {
-		getMetadataOrPut<string[]>(MetadataKeyEntityData, target, ()=>[]).push(propertyKey);
+		let descriptor:EntityDataDescriptor = {
+			field: propertyKey,
+			name: serializedName ?? propertyKey,
+			type: "clone"
+		}
+		getMetadataOrPut<EntityDataDescriptor[]>(MetadataKeyEntityData, target, ()=>[]).push(descriptor);
+	}
+}
+export function EntityReference(serializedName?:string): PropertyDecorator {
+	return (target: Entity, propertyKey:string) => {
+		let descriptor:EntityDataDescriptor = {
+			field: propertyKey,
+			name: serializedName ?? propertyKey,
+			type: "reference"
+		}
+		getMetadataOrPut<EntityDataDescriptor[]>(MetadataKeyEntityData, target, ()=>[]).push(descriptor);
 	}
 }
 
-export function getEntityDataKeys(entity:Entity):string[] {
+export function getEntityDataDescriptors(entity:Entity):EntityDataDescriptor[] {
 	return Reflect.getMetadata(MetadataKeyEntityData, entity) ?? []
 }
-export function getEntityDataEntries(entity:Entity):[string, any][] {
-	return Reflect.getMetadata(MetadataKeyEntityData, entity)?.map((propertyName:string)=>
-		[propertyName,(entity as any)[propertyName]]) ?? []
-}
+

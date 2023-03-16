@@ -13,7 +13,7 @@ import {findGradient} from "../../utils/grid/dijkstra";
 import {ObjectComponent} from "../ecs/ObjectComponent";
 import {EntityJson} from "../ecs/EntityLoader";
 import {UUID} from "../ecs/utils";
-import {EntityData} from "../ecs/decorators";
+import {EntityData, EntityReference} from "../ecs/decorators";
 import {EntityClassLoader} from "../ecs/EntityClassLoader";
 
 export type AIState = "disabled" | "idle" | "hunt";
@@ -27,7 +27,7 @@ export class MonsterAI extends ObjectComponent<Creature> {
 	) {
 		super(MonsterAI.CLSID, null, uuid);
 	}
-	// TODO @EntityReference()
+	@EntityReference()
 	target: Creature|null = null;
 	@EntityData()
 	state: AIState = "idle";

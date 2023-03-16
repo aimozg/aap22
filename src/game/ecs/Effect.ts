@@ -2,16 +2,13 @@ import {GameObject} from "./GameObject";
 import {Entity} from "./Entity";
 import {StatId} from "./ObjectStat";
 
-export abstract class Effect<E extends GameObject> implements Entity {
+export class Effect<E extends GameObject> extends Entity {
 	parentEntity: E | null           = null;
 	stats: Map<StatId,number> | null = null;
 	// TODO hooks
 
-	protected constructor(
-		public readonly clsid: string,
-		public readonly bpid: string|null,
-		public readonly uuid: number
-	) {
+	constructor(clsid: string, bpid: string | null, uuid: number) {
+		super(clsid, bpid, uuid);
 	}
 
 	toString() {

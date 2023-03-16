@@ -13,12 +13,13 @@ import {initStatBaseValuesFromMetadata} from "./decorators";
 
 export type ChildGameObject = [any, GameObject];
 
-export abstract class GameObject implements Entity {
+export abstract class GameObject extends Entity {
 	protected constructor(
-		public readonly clsid: string,
-		public readonly bpid: string|null,
-		public readonly uuid: number
+		clsid: string,
+		bpid: string|null,
+		uuid: number
 	) {
+		super(clsid, bpid, uuid);
 		initStatBaseValuesFromMetadata(this);
 	}
 	name: string                  = "GameObject";

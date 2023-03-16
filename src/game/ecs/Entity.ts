@@ -1,9 +1,11 @@
-export interface Entity {
+export abstract class Entity {
+	protected constructor(
+		public readonly clsid: string,
+		public readonly bpid: string|null,
+		public readonly uuid: number
+	) {}
 	parentEntity: Entity|null;
-	uuid: number;
-	clsid: string;
-	bpid: string|null;
 
-	saveCustomData?: (data:Record<string, any>)=>void;
-	loadCustomData?: (data:Record<string, any>)=>void;
+	saveCustomData?(data:Record<string, any>):void;
+	loadCustomData?(data:Record<string, any>):void;
 }
