@@ -5,14 +5,13 @@
 import {Particle, ParticleDef} from "../../utils/ui/ParticleLayer";
 import {Colors} from "../../utils/ui/canvas";
 import {Tile, Tiles} from "../core/Tile";
-import {GameState} from "../GameState";
 import {CELLHEIGHT, CELLWIDTH} from "./ScreenManager";
 import {Game} from "../Game";
 
 function particleTile(p:Particle):Tile {
 	let x = (p.x/CELLWIDTH)|0;
 	let y = (p.y/CELLHEIGHT)|0;
-	return GameState.level.tileAt({x,y})
+	return Game.state.level.tileAt({x,y})
 }
 function hitWallDrop(p:Particle) {
 	if (particleTile(p) === Tiles.wall) {

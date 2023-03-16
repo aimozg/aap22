@@ -4,7 +4,6 @@
 
 import {Creature} from "../core/Creature";
 import {GameController} from "../GameController";
-import {GameState} from "../GameState";
 import {Dir8List, xyPlusDir} from "../../utils/grid/grid";
 import {checkLineOfSight} from "../../utils/grid/los";
 import {XY} from "../../utils/grid/geom";
@@ -15,6 +14,7 @@ import {EntityJson} from "../ecs/EntityLoader";
 import {UUID} from "../ecs/utils";
 import {EntityData, EntityReference} from "../ecs/decorators";
 import {EntityClassLoader} from "../ecs/EntityClassLoader";
+import {Game} from "../Game";
 
 export type AIState = "disabled" | "idle" | "hunt";
 
@@ -34,13 +34,13 @@ export class MonsterAI extends ObjectComponent<Creature> {
 
 	execute() {
 		logger.debug("execute {} {}",this.host, this.state);
-		let gc = GameController, me = this.host!, level = GameState.level;
+		let gc = GameController, me = this.host!, level = Game.state.level;
 		switch (this.state) {
 			case "disabled":
 				gc.actSkip(me);
 				break;
 			case "idle": {
-				let target = GameState.player;
+				let target = Game.state.player;
 				if (target.isAlive && checkLineOfSight(level, target.pos, me.pos)) {
 					logger.debug("can see player - switch to hunt");
 					this.state  = "hunt";
@@ -48,7 +48,7 @@ export class MonsterAI extends ObjectComponent<Creature> {
 					this.execute()
 					return;
 				}
-				let dir = GameState.rng.pick(Dir8List);
+				let dir = Game.state.rng.pick(Dir8List);
 				let targetPos = xyPlusDir(me.pos, dir);
 				if (level.contains(targetPos) && level.isEmpty(targetPos)) {
 					gc.actStep(me, targetPos)
@@ -69,7 +69,7 @@ export class MonsterAI extends ObjectComponent<Creature> {
 					gc.actMeleeAttack(me, target);
 					return;
 				}
-				let dir = findGradient(GameState.approachPlayerMap, level.width, level.height, me.pos, 8, true);
+				let dir = findGradient(Game.state.approachPlayerMap, level.width, level.height, me.pos, 8, true);
 				if (dir) {
 					if (!gc.actSmart(me, dir.dx, dir.dy)) {
 						gc.actSkip(me);

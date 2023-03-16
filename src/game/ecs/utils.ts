@@ -5,14 +5,10 @@
 import {StatId} from "./ObjectStat";
 import {GameObject} from "./GameObject";
 
-let uuidCounter = 1;
-
 export function UUID():number {
-	return uuidCounter++;
+	return UUID.counter++;
 }
-export function setUuidCounter(value:number) {
-	uuidCounter = value;
-}
+UUID.counter = 1;
 
 export function setObjectBaseValues(target:GameObject, values:Partial<Record<StatId,number>>) {
 	for (let [k,v] of Object.entries(values)) {

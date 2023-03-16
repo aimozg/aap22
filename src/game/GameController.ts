@@ -2,7 +2,6 @@
  * Created by aimozg on 05.03.2023.
  */
 
-import {GameState} from "./GameState";
 import {XY} from "../utils/grid/geom";
 import {Creature} from "./core/Creature";
 import {Player} from "./core/Player";
@@ -52,30 +51,30 @@ export let GameController = new class {
 	generateNewLevel() {
 		while (true) {
 			let level = ChunkMapGen.generateLevel(
-				GameState.maprng,
+				Game.state.maprng,
 				80,
 				80,
 				dungeonChunks
 			);
 			if (level.rooms.length > 10) {
-				fillRooms(level, GameState.depth);
-				GameState.level = level;
+				fillRooms(level, Game.state.depth);
+				Game.state.level = level;
 				break;
 			}
 		}
 	}
 
 	initLevel() {
-		let level         = GameState.level;
-		GameState.roundNo = 1;
-		GameState.tickNo  = 0;
-		GameState.vismap  = new Int8Array(level.width*level.height);
-		GameState.approachPlayerMap = new Int8Array(level.width*level.height);
+		let level         = Game.state.level;
+		Game.state.roundNo = 1;
+		Game.state.tickNo  = 0;
+		Game.state.vismap  = new Int8Array(level.width*level.height);
+		Game.state.approachPlayerMap = new Int8Array(level.width*level.height);
 		for (let creature of level.creatures()) {
 			creature.ap = creature.apPerAction;
 		}
 		this.dirty = true;
-		this.checkVisibility();
+		this.updateMaps();
 	}
 
 	update() {
@@ -84,7 +83,7 @@ export let GameController = new class {
 		let loop = true;
 		while (loop) {
 			loop = false;
-			for (let creature of GameState.level.creatures()) {
+			for (let creature of Game.state.level.creatures()) {
 				if (creature.canAct()) {
 					if (creature instanceof Player) {
 						let queuedAction = this.playerActionQueue.shift();
@@ -93,7 +92,7 @@ export let GameController = new class {
 							this.dirty = true;
 						} else {
 							this.playerCanAct = true;
-							this.checkVisibility();
+							this.updateMaps();
 							return;
 						}
 					} else {
@@ -108,12 +107,12 @@ export let GameController = new class {
 		this.nextTick();
 	}
 
-	checkVisibility() {
+	updateMaps(state=Game.state) {
 		if (this.dirty) {
-			let level       = GameState.level;
-			let player      = GameState.player;
-			GameState.vismap = genVisibilityMap(level, player.pos, false, GameState.vismap);
-			let approachMap = GameState.approachPlayerMap;
+			let level       = state.level;
+			let player      = state.player;
+			state.vismap = genVisibilityMap(level, player.pos, false, state.vismap);
+			let approachMap = state.approachPlayerMap;
 			approachMap.fill(127);
 			approachMap[player.pos.y*level.width+player.pos.x] = 0;
 			fillDijkstraMap(
@@ -138,26 +137,26 @@ export let GameController = new class {
 	//-----------------//
 
 	nextTick() {
-		GameState.tickNo++;
-		if (GameState.tickNo >= 4) {
+		Game.state.tickNo++;
+		if (Game.state.tickNo >= 4) {
 			this.roundEnd();
 		}
 		this.tick();
 	}
 
 	tick() {
-		logger.debug("tick {}.{}", GameState.roundNo, GameState.tickNo);
-		for (let creature of GameState.level.creatures()) {
+		logger.debug("tick {}.{}", Game.state.roundNo, Game.state.tickNo);
+		for (let creature of Game.state.level.creatures()) {
 			this.tickCreature(creature);
 		}
 	}
 
 	roundStart() {
-		logger.info("roundStart {}", GameState.roundNo);
+		logger.info("roundStart {}", Game.state.roundNo);
 	}
 	roundEnd() {
-		GameState.tickNo = 0;
-		GameState.roundNo++;
+		Game.state.tickNo = 0;
+		Game.state.roundNo++;
 		this.roundStart();
 	}
 	tickCreature(creature:Creature) {
@@ -186,7 +185,7 @@ export let GameController = new class {
 			return true;
 		}
 
-		let level = GameState.level;
+		let level = Game.state.level;
 		let pos2 = XY.shift(creature.pos, dx, dy);
 		if (!level.contains(pos2)) return false;
 
@@ -230,7 +229,7 @@ export let GameController = new class {
 		actor.ap = 0;
 		// TODO
 		let toHit = atLeast(0, actor.aim) - atLeast(0, target.dodge);
-		let rng   = GameState.rng;
+		let rng   = Game.state.rng;
 		let wasHit = rng.d100vs(toHit);
 		if (wasHit) {
 			// this.log("{a} hit{a.s} {b}. ", {a:actor, b:target});
@@ -247,7 +246,7 @@ export let GameController = new class {
 	}
 
 	actPickup(actor: Creature, item:DroppedItem) {
-		if (actor === GameState.player) {
+		if (actor === Game.state.player) {
 			// TODO actor.log?.()
 			Game.screenManager.logsub("You pick up {item}. ", {item:item.item});
 		}
@@ -339,11 +338,11 @@ export let GameController = new class {
 
 	playerSmartAction(dx: number, dy: number) {
 		logger.debug("playerSmartAction {} {}", dx, dy);
-		this.queuePlayerAction(()=>this.actSmart(GameState.player, dx, dy));
+		this.queuePlayerAction(()=>this.actSmart(Game.state.player, dx, dy));
 	}
 	playerPickup() {
 		this.queuePlayerAction(()=>{
-			let player = GameState.player;
+			let player = Game.state.player;
 			let cell = player.cell;
 			let item = cell.objects.find((o):o is DroppedItem=>o instanceof DroppedItem);
 			if (!item) {

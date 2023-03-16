@@ -3,7 +3,6 @@
  */
 
 import {Level, Room} from "../core/Level";
-import {GameState} from "../GameState";
 import {LevelExit} from "../objects/LevelExit";
 import {MonsterLib} from "../data/MonsterLib";
 import {MonsterAI} from "../combat/MonsterAI";
@@ -11,11 +10,12 @@ import {LogManager} from "../../utils/logging/LogManager";
 import {Item} from "../core/Item";
 import {WeaponLib} from "../data/WeaponLib";
 import {Monster} from "../core/Monster";
+import {Game} from "../Game";
 
 let logger = LogManager.loggerFor("RoomFiller");
 
 function fillRoom(level:Level, room:Room, threatLevel:number) {
-	let maprng = GameState.maprng;
+	let maprng = Game.state.maprng;
 	let n = maprng.nextInt(2, 5);
 	let proto = maprng.either(MonsterLib.Zombie, MonsterLib.Skeleton);
 	while (n-->0) {
@@ -42,10 +42,10 @@ function fillRoom(level:Level, room:Room, threatLevel:number) {
 }
 
 export function fillRooms(level:Level, threatLevel:number) {
-	let maprng = GameState.maprng;
+	let maprng = Game.state.maprng;
 	let rooms = level.rooms.slice();
 	let pcroom = maprng.randpop(rooms);
-	level.addObject(GameState.player, pcroom.randomEmptyCell(maprng)!.xy);
+	level.addObject(Game.state.player, pcroom.randomEmptyCell(maprng)!.xy);
 
 	let exitroom = maprng.pick(rooms);
 	let exitcell = level.cellAt(exitroom.center());

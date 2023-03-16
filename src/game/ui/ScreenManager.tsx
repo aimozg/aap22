@@ -3,7 +3,6 @@
  */
 import {LayeredCanvas} from "../../utils/ui/LayeredCanvas";
 import {GlyphLayer, GlyphSource} from "../../utils/ui/GlyphLayer";
-import {GameState} from "../GameState";
 import {createElement, removeChildren} from "../../utils/ui/dom";
 import {substitutePattern} from "../../utils/string";
 import Chars from "../../utils/ui/chars";
@@ -18,6 +17,7 @@ import {ParticlePresetId, spawnParticle} from "./ParticlePresets";
 import {DroppedItem, Item, ItemRarity} from "../core/Item";
 import {Corpse} from "../objects/Corpse";
 import BitmapFontIBMBIOS from "../../../assets/ibmbios";
+import {Game} from "../Game";
 
 export let FONTFACE = "IBMBIOS";
 export let FONTSIZE = "32px";
@@ -89,6 +89,11 @@ export class ScreenManager {
 	decalLayer: DecalLayer;
 	private sidebar: Element;
 
+	afterLoad() {
+		this.particleLayer.clear();
+		this.clearLog();
+	}
+
 	async setup() {
 		this.mainCanvas = new LayeredCanvas({
 			fill: '#222',
@@ -137,15 +142,15 @@ export class ScreenManager {
 
 		// Create layers
 		let tileLayerData:GlyphSource = {
-			get width() { return GameState.mapWidth },
-			get height() { return GameState.mapHeight },
+			get width() { return Game.state.mapWidth },
+			get height() { return Game.state.mapHeight },
 			glyphAt(x: number, y: number){
-				let i = GameState.level.xy2i(x,y);
-				if (!GameState.vismap[i]) return null;
-				let cell = GameState.level.cellAt({x,y});
+				let i = Game.state.level.xy2i(x,y);
+				if (!Game.state.vismap[i]) return null;
+				let cell = Game.state.level.cellAt({x,y});
 				if (cell.objects.length > 0) return null;
 				/*
-				let d = GameState.approachPlayerMap[i];
+				let d = Game.state.approachPlayerMap[i];
 				if (d >= 0 && d <= 9) {
 					return {
 						fg: '#777',
@@ -158,12 +163,12 @@ export class ScreenManager {
 			}
 		};
 		let mobjLayerData:GlyphSource = {
-			get width() { return GameState.mapWidth },
-			get height() { return GameState.mapHeight },
+			get width() { return Game.state.mapWidth },
+			get height() { return Game.state.mapHeight },
 			glyphAt(x: number, y: number){
-				let i = GameState.level.xy2i(x,y);
-				if (!GameState.vismap[i]) return null;
-				let cell  = GameState.level.cellAt({x,y});
+				let i = Game.state.level.xy2i(x,y);
+				if (!Game.state.vismap[i]) return null;
+				let cell  = Game.state.level.cellAt({x,y});
 				let mobj = cell.topMobj();
 				let glyph = mobj?.glyph;
 				if (glyph) glyph={...glyph};
@@ -211,9 +216,9 @@ export class ScreenManager {
 		/* fit entier map
 		this.mainCanvas.fitToShow({
 			x1: 0,
-			x2: CELLWIDTH*GameState.level.width,
+			x2: CELLWIDTH*Game.state.level.width,
 			y1: 0,
-			y2: CELLHEIGHT*GameState.level.height
+			y2: CELLHEIGHT*Game.state.level.height
 		});
 		 */
 	}
@@ -235,8 +240,8 @@ export class ScreenManager {
 			this.topStatus.append(...richText(status));
 		}
 		this.mainCanvas.setCenter({
-			x: (GameState.player.pos.x+0.5)*CELLWIDTH,
-			y: (GameState.player.pos.y+0.5)*CELLHEIGHT
+			x: (Game.state.player.pos.x+0.5)*CELLWIDTH,
+			y: (Game.state.player.pos.y+0.5)*CELLHEIGHT
 		})
 		this.particleLayer.update(dt);
 		this.mainCanvas.render();
@@ -246,11 +251,11 @@ export class ScreenManager {
 	private updateSidebar() {
 		removeChildren(this.sidebar);
 
-		let player = GameState.player;
+		let player = Game.state.player;
 
-		this.sidebar.append(`Seed ${GameState.seed}\n`);
+		this.sidebar.append(`Seed ${Game.state.seed}\n`);
 		this.sidebar.append(
-			<span class={GameState.level.cleared?"text-blue":""}>Dungeon level {GameState.depth}</span>);
+			<span class={Game.state.level.cleared?"text-blue":""}>Dungeon level {Game.state.depth}</span>);
 		this.sidebar.append(<br/>);
 		this.sidebar.append(<br/>);
 		this.sidebar.append(`Hero level ${player.level}\n`);
@@ -298,7 +303,7 @@ export class ScreenManager {
 	}
 
 	getStatusLine():string {
-		let player = GameState.player;
+		let player = Game.state.player;
 
 		let status = "";
 		if (!player.isAlive) {
@@ -358,6 +363,10 @@ export class ScreenManager {
 			return String(object);
 		});
 		this.log(message);
+	}
+	clearLog() {
+		this.topLog.innerHTML = "";
+		this.logLength = 0;
 	}
 	log(message:string){
 		let elements = richText(message);

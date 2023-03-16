@@ -1,3 +1,5 @@
+import {EntityLoader} from "./EntityLoader";
+
 export abstract class Entity {
 	protected constructor(
 		public readonly clsid: string,
@@ -6,6 +8,8 @@ export abstract class Entity {
 	) {}
 	parentEntity: Entity|null;
 
-	saveCustomData?(data:Record<string, any>):void;
-	loadCustomData?(data:Record<string, any>):void;
+	beforeSave?(ctx: EntityLoader): void;
+	afterLoad?(ctx: EntityLoader): void;
+	saveCustomData?(data:Record<string, any>, ctx:EntityLoader):void;
+	loadCustomData?(data:Record<string, any>, ctx:EntityLoader):void;
 }

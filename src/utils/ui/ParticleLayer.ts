@@ -40,6 +40,9 @@ export class ParticleStore {
 	particles: Particle[] = [];
 	defaultAZ = 0;
 	defaultSize = 2;
+	clear() {
+		this.particles = [];
+	}
 	addParticle(def:ParticleDef) {
 		let p:Particle = {
 			x: def.x,
@@ -98,6 +101,9 @@ export class ParticleLayer extends AbstractCanvasLayer {
 	res = 0;
 	particles = new ParticleStore()
 
+	clear() {
+		this.particles.clear();
+	}
 	addParticle(def:ParticleDef) {
 		this.particles.addParticle(def);
 	}

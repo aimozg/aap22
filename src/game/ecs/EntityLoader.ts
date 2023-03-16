@@ -8,7 +8,7 @@ import {StatId} from "./ObjectStat";
 import {ObjectComponent} from "./ObjectComponent";
 
 export class EntityLoaderError extends Error {
-	constructor(context: EntityLoader, message: string, cause?:Error) {
+	constructor(context: EntityLoader, message: string, cause?: Error) {
 		super(`Error loading ${context.context}: ${message}`,
 			cause ? {cause: cause} : undefined);
 		if (cause) {
@@ -36,22 +36,26 @@ export class EntityLoader {
 	}
 
 	private classLoaders = new Map<string, EntityClassLoader<any>>()
-	registerClassLoader(c:EntityClassLoader<any>) {
+
+	registerClassLoader(c: EntityClassLoader<any>) {
 		this.classLoaders.set(c.clsid, c);
 	}
 
-	private path:string[] = [];
-	private references:{
-		target:Entity,
-		context:string,
-		field:string,
-		uuid:number
+	private path: string[]         = [];
+	private references: {
+		target: Entity,
+		context: string,
+		field: string,
+		uuid: number
 	}[];
-	private entities = new Map<number,Entity>();
+	private entitiesWithReferences = new Set<Entity>();
+	private entities               = new Map<number, Entity>();
+
 	private clear() {
-		this.path = [];
+		this.path       = [];
 		this.references = [];
 		this.entities.clear();
+		this.entitiesWithReferences.clear();
 	}
 
 	private enter(key: string) {
@@ -63,34 +67,41 @@ export class EntityLoader {
 		if (x !== key) throw new Error(`Inconsistent EntityLoader stack: ${this.context}.${x}, expected ${key}`);
 	}
 
-	serializeValue(x:any):any {
+	serializeValue(x: any): any {
 		if (typeof x === "symbol" || typeof x === "bigint" || typeof x === "function") {
 			this.error(`Cannot serialize ${typeof x}`);
 		}
 		if (x === null || typeof x !== "object") return x;
 		if (x instanceof Set) return [...x];
 		if (x instanceof Map) {
-			let result:any = {};
-			x.forEach((v,k)=>result[k]=this.serializeValue(v));
+			let result: any = {};
+			x.forEach((v, k) => result[k] = this.serializeValue(v));
 			return result;
 		}
 		if (Array.isArray(x)) {
-			return x.map(xi=>this.serializeValue(xi));
+			return x.map(xi => this.serializeValue(xi));
 		}
-		let result:any = {};
-		for (let [k,v] of Object.entries(x)) {
+		let result: any = {};
+		for (let [k, v] of Object.entries(x)) {
 			result[k] = this.serializeValue(v);
 		}
 		return result;
 	}
+
 	serializeRoot(root: Entity): EntityJson {
 		this.clear();
-		let output = this.serializeEntity(root,"$");
+		let output = this.serializeEntity(root, "$");
 		this.clear();
 		return output;
 	}
+
 	serializeEntity(entity: Entity, key?: string): EntityJson {
 		if (key) this.enter(key);
+		try {
+			entity.beforeSave?.(this);
+		} catch (e) {
+			this.error(e);
+		}
 		let out: EntityJson = {
 			clsid: entity.clsid,
 			uuid: entity.uuid
@@ -101,11 +112,11 @@ export class EntityLoader {
 			out.data = {};
 			for (let d of datas) {
 				this.enter(d.field);
-				let value         = (entity as any)[d.field];
+				let value        = (entity as any)[d.field];
 				out.data[d.name] = this.serializeDataField(value, d);
 				this.exit(d.field);
 			}
-			entity.saveCustomData?.(out.data);
+			entity.saveCustomData?.(out.data, this);
 		}
 		if (entity instanceof GameObject) {
 			this.writeObjectData(entity, out);
@@ -115,7 +126,8 @@ export class EntityLoader {
 		if (key) this.exit(key);
 		return out;
 	}
-	private serializeDataField(value:any, descriptor:EntityDataDescriptor):any {
+
+	private serializeDataField(value: any, descriptor: EntityDataDescriptor): any {
 		switch (descriptor.type) {
 			case "clone":
 				return this.serializeValue(value);
@@ -161,9 +173,9 @@ export class EntityLoader {
 
 	deserializeRoot(rootJson: EntityJson): Entity {
 		this.clear();
-		let root = this.deserializeEntity(rootJson,"$");
+		let root = this.deserializeEntity(rootJson, "$");
 		this.enter("[references]");
-		this.references.forEach(reference=>{
+		this.references.forEach(reference => {
 			let entity = this.entities.get(reference.uuid);
 			if (!entity) {
 				this.error(`Property ${reference.context} refers unknown entity #${reference.uuid}`)
@@ -172,17 +184,22 @@ export class EntityLoader {
 			}
 		})
 		this.exit("[references]");
+		this.enter("[callbacks]");
+		this.entitiesWithReferences.forEach(e => e.afterLoad?.(this));
+		this.exit("[callbacks]");
 		this.clear();
 		return root;
 	}
+
 	deserializeEntity(input: EntityJson, key?: string): Entity {
 		if (key) this.enter(key);
-		let clsid       = input.clsid;
-		let bpid        = input.bpid;
-		let uuid        = input.uuid;
-		this.requireType(clsid,"string","[clsid]");
-		if (bpid) this.requireType(bpid,"string","[bpid]");
-		this.requireType(uuid,"number","[uuid]");
+		this.requireType(input, "object");
+		let clsid = input.clsid;
+		let bpid  = input.bpid;
+		let uuid  = input.uuid;
+		this.requireType(clsid, "string", "[clsid]");
+		if (bpid) this.requireType(bpid, "string", "[bpid]");
+		this.requireType(uuid, "number", "[uuid]");
 		if (this.entities.has(uuid)) {
 			this.error(`Duplicate entity #${uuid}`);
 		}
@@ -198,17 +215,17 @@ export class EntityLoader {
 			this.enter("data");
 			this.requireType(input.data, "object");
 			try {
-				entity.loadCustomData?.(input.data);
+				entity.loadCustomData?.(input.data, this);
 			} catch (e) {
 				this.error(e);
 			}
 			let descriptors = getEntityDataDescriptors(entity);
 			for (let descriptor of descriptors) {
 				this.enter(descriptor.field);
-				let value:any = input.data[descriptor.name];
+				let value: any = input.data[descriptor.name];
 				switch (descriptor.type) {
 					case "clone":
-						this.deserializeValue(entity,descriptor.field,value);
+						this.deserializeValue(entity, descriptor.field, value);
 						break;
 					case "reference":
 						if (value !== null) {
@@ -228,19 +245,29 @@ export class EntityLoader {
 		} else if (entity instanceof Effect) {
 			this.deserializeEffectFields(entity, input);
 		} else this.error(`Cannot deserialize ${objectClassName(entity)}`);
+		if (entity.afterLoad && !this.entitiesWithReferences.has(entity)) {
+			try {
+				entity.afterLoad(this);
+			} catch (e) {
+				this.error(e);
+			}
+		}
 		this.entities.set(uuid, entity);
 		if (key) this.exit(key);
 		return entity;
 	}
-	deserializeReference(target:Entity, field:string, uuid:number) {
+
+	deserializeReference(target: Entity, field: string, uuid: number) {
+		this.entitiesWithReferences.add(target);
 		this.references.push({
 			target,
 			field,
 			uuid,
-			context:this.context
+			context: this.context
 		})
 	}
-	deserializeValue(entity:Entity, key:string, value:any) {
+
+	deserializeValue(entity: Entity, key: string, value: any) {
 		// TODO either support nested complex values, or throw error on their serialization attempts.
 		let oldValue = (entity as any)[key];
 		if (oldValue instanceof Set) {
@@ -250,11 +277,12 @@ export class EntityLoader {
 			}
 		} else if (oldValue instanceof Map) {
 			oldValue.clear();
-			for (let [k,v] of Object.entries(value)) {
-				oldValue.set(k,v);
+			for (let [k, v] of Object.entries(value)) {
+				oldValue.set(k, v);
 			}
 		} else (entity as any)[key] = structuredClone(value);
 	}
+
 	private deserializeEffectFields(effect: Effect<any>, input: EntityJson) {
 		if (input.stats) {
 			this.enter("stats");
@@ -312,11 +340,11 @@ export class EntityLoader {
 			for (let i = 0; i < input.children.length; i++) {
 				this.enter(String(i));
 				let entry = input.children[i];
-				this.requireType(entry,"array");
+				this.requireType(entry, "array");
 				if (entry.length !== 2) this.error(`Invalid child entry size ${entry.length}`);
 				this.exit(String(i));
-				let [pos,jchild] = entry;
-				let spos = objectToString(pos);
+				let [pos, jchild] = entry;
+				let spos          = objectToString(pos);
 				this.enter(spos);
 				let child = this.deserializeEntity(jchild);
 				if (!(child instanceof GameObject)) {
@@ -334,7 +362,7 @@ export class EntityLoader {
 		}
 	}
 
-	private requireType(value: any, type: string, key?: string) {
+	requireType(value: any, type: string, key?: string) {
 		if (type === "array") {
 			if (!Array.isArray(value)) {
 				if (key) this.enter(key);

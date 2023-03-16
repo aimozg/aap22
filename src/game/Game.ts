@@ -21,16 +21,23 @@ import {MonsterAI} from "./combat/MonsterAI";
 
 export namespace Game {
 
-	export const state = GameState;
-	export let rng = state.rng;
-	export let maprng = state.maprng;
+	export let state: GameState = new GameState();
 	export let fxrng:Random = XorWowRandom.create();
 	export let screenManager: ScreenManager;
 	export let inputManager: InputManager;
 	export const gameController = GameController;
 	export const entityLoader = new EntityLoader();
 
+	export function getSaveData():any {
+		return entityLoader.serializeRoot(state);
+	}
+	export function loadSaveData(data:any) {
+		entityLoader.deserializeRoot(data);
+		screenManager.afterLoad();
+	}
+
 	export async function start() {
+		entityLoader.registerClassLoader(GameState.Loader);
 		entityLoader.registerClassLoader(Item.Loader);
 		Item.Loader.registerBlueprints(Object.values(WeaponLib));
 		entityLoader.registerClassLoader(Level.Loader);
@@ -49,10 +56,10 @@ export namespace Game {
 
 		screenManager.beforeRender = ()=>{
 			GameController.update();
-			GameController.checkVisibility();
+			GameController.updateMaps();
 		}
 
-		GameState.resetGame();
+		state.resetGame();
 		GameController.newGame();
 
 		screenManager.resizeCanvas();

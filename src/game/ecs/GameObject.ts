@@ -32,6 +32,7 @@ export abstract class GameObject extends Entity {
 		return `[${this.clsid}#${this.uuid}]`
 	}
 
+	// TODO @ChildObject
 	abstract saveChildren(): ChildGameObject[];
 	loadChild(pos:any, child:GameObject):void {
 		throw new Error(`Object ${this} cannot have child [${objectToString(pos)}, ${child}]`);
