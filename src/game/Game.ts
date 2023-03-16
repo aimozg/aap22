@@ -29,7 +29,7 @@ export namespace Game {
 	export const entityLoader = new EntityLoader();
 
 	export function getSaveData():any {
-		return entityLoader.serializeRoot(state);
+		return entityLoader.save(state);
 	}
 	export function loadSaveData(data:any) {
 		entityLoader.deserializeRoot(data);

@@ -6,6 +6,7 @@ import {objectClassName, objectToString} from "../../utils/types";
 import {EntityDataDescriptor, getEntityDataDescriptors} from "./decorators";
 import {StatId} from "./ObjectStat";
 import {ObjectComponent} from "./ObjectComponent";
+import {compressEntityJson, decompressEntityJson} from "./compress";
 
 export class EntityLoaderError extends Error {
 	constructor(context: EntityLoader, message: string, cause?: Error) {
@@ -93,6 +94,13 @@ export class EntityLoader {
 		let output = this.serializeEntity(root, "$");
 		this.clear();
 		return output;
+	}
+
+	save(root:Entity):ArrayBuffer {
+		return compressEntityJson(this.serializeRoot(root));
+	}
+	load(input:ArrayBuffer):any {
+		return this.deserializeRoot(decompressEntityJson(input));
 	}
 
 	serializeEntity(entity: Entity, key?: string): EntityJson {

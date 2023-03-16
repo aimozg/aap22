@@ -99,11 +99,11 @@ export class Level extends GameObject implements LosProvider {
 	readonly rooms: Room[] = [];
 	readonly rect:XYRect;
 	saveChildren(): ChildGameObject[] {
-		return this.mobjmap.map(obj=>[obj.pos,obj]);
+		return this.mobjmap.map(obj=>[this.xy2i(obj.pos.x,obj.pos.y),obj]);
 	}
-	loadChild(pos: XY, child: GameObject) {
+	loadChild(pos: number, child: GameObject) {
 		if (child instanceof MapObject) {
-			this.addObject(child, pos);
+			this.addObject(child, this.i2xy(pos));
 		}
 	}
 
