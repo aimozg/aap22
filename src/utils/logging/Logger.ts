@@ -53,7 +53,7 @@ export abstract class Logger {
 			}
 			return "["+x.map(c=>Logger.toString(c)).join(", ")+"]"
 		}
-		let s = isPlainObject(x) ? safeStringify(x) : String(x);
+		let s = isPlainObject(x) ? safeStringify(x) : safeToString(x);
 		if (s === '[object Object]') s = '[object '+Object.getPrototypeOf(x).constructor.name+']';
 		return s
 	}
@@ -66,11 +66,18 @@ export abstract class Logger {
 	}
 }
 
+function safeToString(o:any):string {
+	try {
+		return String(o)
+	} catch (e) {
+		return String(e)
+	}
+}
 function safeStringify(o:any):string {
 	try {
 		return JSON.stringify(o);
 	} catch (e) {
-		return String(o);
+		return safeToString(o);
 	}
 }
 

@@ -82,10 +82,6 @@ export class Item extends GameObject {
 		this.setParentObject(null);
 	}
 
-	saveChildren(): ChildGameObject[] {
-		return [];
-	}
-
 	static Loader = new class extends BlueprintClassLoader<Item, ItemBlueprint> {
 		createFromBlueprint(ctx: EntityLoader, bp: ItemBlueprint, uuid: number, e: EntityJson): Item {
 			return new Item(bp, uuid);
@@ -103,6 +99,14 @@ export class DroppedItem extends MapObject {
 
 	saveChildren(): ChildGameObject[] {
 		return [[0,this.item]];
+	}
+
+	loadChild(pos: any, child: GameObject) {
+		if (pos === 0 && child instanceof Item) {
+			// already passed in the constructor
+			return;
+		}
+		super.loadChild(pos, child);
 	}
 
 	z = MapObject.Z_ITEM;

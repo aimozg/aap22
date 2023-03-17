@@ -303,7 +303,7 @@ export let GameController = new class {
 		}
 		 */
 		let level = target.parentEntity!;
-		let cell = target.cell;
+		let cell = target.cell!;
 
 		let str = /*source
 			? "{b} {red;kill{b.s}} {a}. "
@@ -343,7 +343,7 @@ export let GameController = new class {
 	playerPickup() {
 		this.queuePlayerAction(()=>{
 			let player = Game.state.player;
-			let cell = player.cell;
+			let cell = player.cell!;
 			let item = cell.objects.find((o):o is DroppedItem=>o instanceof DroppedItem);
 			if (!item) {
 				Game.screenManager.log("Nothing to pickup! ");

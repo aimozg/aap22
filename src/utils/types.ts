@@ -33,6 +33,13 @@ export function getMetadataOrPut<T>(metadataKey:any, target:Object, defaultMetad
 	return value;
 }
 
+export function getOwnMetadataOrPut<T>(metadataKey:any, target:Object, defaultMetadataProvider:(target:Object)=>T):T {
+	if (Reflect.hasOwnMetadata(metadataKey, target)) return Reflect.getOwnMetadata(metadataKey, target);
+	let value = defaultMetadataProvider(target);
+	Reflect.defineMetadata(metadataKey, value, target);
+	return value;
+}
+
 export function objectToString(x:any):string {
 	let s = String(x);
 	if (s === "[object Object]") {

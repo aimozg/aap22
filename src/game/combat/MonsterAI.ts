@@ -33,8 +33,8 @@ export class MonsterAI extends ObjectComponent<Creature> {
 	state: AIState = "idle";
 
 	execute() {
-		logger.debug("execute {} {}",this.host, this.state);
-		let gc = GameController, me = this.host!, level = Game.state.level;
+		logger.debug("execute {} {}",this.parentEntity, this.state);
+		let gc = GameController, me = this.parentEntity!, level = Game.state.level;
 		switch (this.state) {
 			case "disabled":
 				gc.actSkip(me);

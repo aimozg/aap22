@@ -309,7 +309,7 @@ export class ScreenManager {
 		if (!player.isAlive) {
 			status += "{red;GAME OVER}  "
 		} else {
-			let yousee = player.cell.objects.filter(o => o !== player).map(mobj => this.formatTag(mobj, "")).join(", ");
+			let yousee = player.cell!.objects.filter(o => o !== player).map(mobj => this.formatTag(mobj, "")).join(", ");
 			if (yousee) {
 				status += `You see ${yousee}.`;
 			}

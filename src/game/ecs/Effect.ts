@@ -14,12 +14,12 @@ export class Effect<E extends GameObject> extends Entity {
 	toString() {
 		return `[${this.clsid}#${this.uuid} @${this.parentEntity}]`
 	}
-	addTo(target:E) {
-		if (this.parentEntity) throw new Error(`Effect ${this} already added`);
-		this.parentEntity = target;
-		target.effects.push(this);
-		// TODO call onAdd
-		// TODO copy stats
-		// TODO add hooks
+	addTo(host:E):void {
+		host.addEffect(this);
 	}
+	remove():void {
+		this.parentEntity?.removeEffect(this);
+	}
+	onAdd?(host:E):void;
+	onRemove?(host:E):void;
 }

@@ -94,7 +94,7 @@ export abstract class Creature extends MapObject {
 	readonly speed: number;
 	@RawStat(1)
 	hp: number;
-	@BuffableStat(0)
+	@BuffableStat(1)
 	readonly hpMax: number;
 	@BuffableStat(0)
 	readonly naturalAim: number;

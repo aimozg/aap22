@@ -1,7 +1,7 @@
 import Chars from "../../utils/ui/chars";
 import {Creature} from "./Creature";
 import {Colors} from "../../utils/ui/canvas";
-import {setObjectBaseValues, UUID} from "../ecs/utils";
+import {initObjectBaseValues, UUID} from "../ecs/utils";
 import {EntityClassLoader} from "../ecs/EntityClassLoader";
 import {EntityJson} from "../ecs/EntityLoader";
 
@@ -14,7 +14,7 @@ export class Player extends Creature {
 		this.glyph.ch = Chars.SMILE_WHITE;
 		this.glyph.fg = this.color;
 		this.tags.add("player");
-		setObjectBaseValues(this, {
+		initObjectBaseValues(this, {
 			level: 1,
 			speed: 4,
 			hpMax: 20,

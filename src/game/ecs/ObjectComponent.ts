@@ -2,10 +2,10 @@
  * Created by aimozg on 13.03.2023.
  */
 
-import {ChildGameObject, GameObject} from "./GameObject";
+import {GameObject} from "./GameObject";
 
 export class ObjectComponent<HOST extends GameObject> extends GameObject {
-	host: HOST;
+	parentEntity: HOST;
 
 	onAdd(host:HOST):void {}
 
@@ -18,15 +18,7 @@ export class ObjectComponent<HOST extends GameObject> extends GameObject {
 	}
 
 	addTo(host:HOST) {
-		if (this.host) throw new Error(`Component ${this} already attached to ${this.host}`);
-		host.components.push(this);
-		this.host = host;
-		this.onAdd(host);
-		// TODO apply effects and stats
-	}
-
-	saveChildren(): ChildGameObject[] {
-		return [];
+		host.addComponent(this);
 	}
 
 

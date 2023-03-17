@@ -6,7 +6,6 @@ import {MapObject} from "../core/MapObject";
 import * as tinycolor from "tinycolor2";
 import {GlyphData} from "../../utils/ui/GlyphLayer";
 import {UUID} from "../ecs/utils";
-import {ChildGameObject} from "../ecs/GameObject";
 
 export class Corpse extends MapObject {
 	constructor(
@@ -24,7 +23,4 @@ export class Corpse extends MapObject {
 	walkable = true;
 	z = MapObject.Z_CORPSE;
 
-	saveChildren(): ChildGameObject[] {
-		return [];
-	}
 }

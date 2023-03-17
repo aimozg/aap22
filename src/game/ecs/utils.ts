@@ -10,9 +10,9 @@ export function UUID():number {
 }
 UUID.counter = 1;
 
-export function setObjectBaseValues(target:GameObject, values:Partial<Record<StatId,number>>) {
+export function initObjectBaseValues(target:GameObject, values:Partial<Record<StatId,number>>) {
 	for (let [k,v] of Object.entries(values)) {
-		target.setStatBaseValue(k as StatId,v);
+		target.setStatBaseValue(k as StatId,v,false);
 	}
 }
 

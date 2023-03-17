@@ -8,18 +8,21 @@ import {Cell, Level} from "./Level";
 import {GlyphData} from "../../utils/ui/GlyphLayer";
 import {objectClassName} from "../../utils/types";
 
+// TODO this could be a component instead
 export abstract class MapObject extends GameObject {
 
 	protected constructor(clsid: string, bpid: string | null, uuid: number) {
 		super(clsid, bpid, uuid);
 	}
 
-	pos: XY = {x:0,y:0};
+	pos: XY = {x: 0, y: 0};
 	z = 0;
-	declare parentEntity: Level|null;
+	parentEntity: Level|null;
+	cell: Cell|undefined;
 
 	moved(newPos: XY) {
 		this.pos = newPos;
+		this.cell = this.parentEntity?.cellAt(newPos);
 	}
 	setPos(newPos: XY) {
 		if (!this.parentEntity) throw new Error(`MapObject.setPos with no level`);
@@ -27,11 +30,6 @@ export abstract class MapObject extends GameObject {
 	}
 	toString() {
 		return `[${objectClassName(this)} ${this.name} (${this.pos.x};${this.pos.y})]`
-	}
-	get cell():Cell {
-		if (!this.parentEntity) throw new Error(`MapObject.cell with no level`);
-		// TODO make parentEntity a Cell
-		return this.parentEntity.cellAt(this.pos);
 	}
 
 	abstract name: string;

@@ -3,6 +3,7 @@
  */
 
 import {Effect} from "./Effect";
+import {GameObject} from "./GameObject";
 
 export interface ObjectStatNames {
 	hp: number;
@@ -31,6 +32,7 @@ export function statAggregateFn(type:StatAggregateType):(a:number, b:number)=>nu
 
 export class ObjectStat {
 	constructor(
+		public host: GameObject,
 		public id: StatId,
 		public base: number = 0,
 		public readonly type: StatAggregateType = StatAggregateType.SUM
@@ -44,7 +46,8 @@ export class ObjectStat {
 		if (this._dirty) this.update();
 		return this._current;
 	}
-	update() {
+	update(runHooks:boolean=true) {
+		let oldCurrent = this._current;
 		let current = this.base;
 		if (this.effects) {
 			let aggregate = statAggregateFn(this.type);
@@ -55,23 +58,27 @@ export class ObjectStat {
 		}
 		this._current = current;
 		this._dirty = false;
-	}
-	addEffect(e:Effect<any>) {
-		(this.effects ??= []).push(e);
-		if (!this._dirty) {
-			let value = e.stats?.get(this.id);
-			if (value !== undefined) this._current = statAggregateFn(this.type)(this._current, value);
+		if (runHooks && current !== oldCurrent) {
+			let event = {
+				object: this.host,
+				stat: this.id,
+				oldValue: oldCurrent,
+				newValue: current
+			};
+			this.host.dispatchEvent("onStatChange", event);
+			this.host.dispatchEvent(`onStatChange_${this.id}`, event);
 		}
 	}
-	removeEffect(e:Effect<any>) {
+	addEffect(e:Effect<any>, runHooks:boolean=true) {
+		(this.effects ??= []).push(e);
+		this.update(runHooks)
+	}
+	removeEffect(e:Effect<any>, runHooks:boolean=true) {
 		this.effects?.remove(e);
-		this.invalidate();
+		this.update(runHooks);
 	}
-	invalidate() {
-		this._dirty = true;
-	}
-	setBaseValue(value:number) {
+	setBaseValue(value:number, runHooks:boolean=true) {
 		this.base = value;
-		this.invalidate();
+		this.update(runHooks);
 	}
 }
