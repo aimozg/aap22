@@ -4,7 +4,7 @@ import {coerce} from "../../utils/math/utils";
 import {Item} from "./Item";
 import {ObjectComponent} from "../ecs/ObjectComponent";
 import {ChildGameObject, GameObject} from "../ecs/GameObject";
-import {BuffableStat, EntityData, RawStat} from "../ecs/decorators";
+import {BuffableStat, EntityData, RawStat, StatBaseValues} from "../ecs/decorators";
 
 export interface CreatureStatNames {
 	level: number;
@@ -27,6 +27,16 @@ export type CreatureTag =
 	"undead"|"beast"|"demon"|"construct"|"humanoid"|
 	"bones";
 
+@StatBaseValues({
+	level: 1,
+	ap: 0,
+	hp: 1,
+	hpMax: 1,
+	naturalAim: 50,
+	naturalDodge: 0,
+	naturalDamage: 1,
+	speed: 4
+})
 export abstract class Creature extends MapObject {
 	protected constructor(
 		clsid: string,
@@ -86,21 +96,21 @@ export abstract class Creature extends MapObject {
 	// STATS //
 	//-------//
 
-	@RawStat(1)
+	@RawStat()
 	level: number;
-	@RawStat(0)
+	@RawStat()
 	ap: number;
-	@BuffableStat(0)
+	@BuffableStat()
 	readonly speed: number;
-	@RawStat(1)
+	@RawStat()
 	hp: number;
-	@BuffableStat(1)
+	@BuffableStat()
 	readonly hpMax: number;
-	@BuffableStat(0)
+	@BuffableStat()
 	readonly naturalAim: number;
-	@BuffableStat(0)
+	@BuffableStat()
 	readonly naturalDamage: number;
-	@BuffableStat(0)
+	@BuffableStat()
 	readonly naturalDodge: number;
 
 	//-------//

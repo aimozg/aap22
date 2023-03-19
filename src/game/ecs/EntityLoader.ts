@@ -4,7 +4,7 @@ import {GameObject} from "./GameObject";
 import {Effect} from "./Effect";
 import {objectClassName, objectToString} from "../../utils/types";
 import {EntityDataDescriptor, getEntityDataDescriptors} from "./decorators";
-import {StatId} from "./ObjectStat";
+import {StatId, StatValues} from "./ObjectStat";
 import {ObjectComponent} from "./ObjectComponent";
 import {compressEntityJson, decompressEntityJson} from "./compress";
 
@@ -24,7 +24,7 @@ export interface EntityJson {
 	uuid: number;
 	bpid?: string;
 	data?: Record<string, any>;
-	stats?: Partial<Record<StatId, number>>;
+	stats?: StatValues;
 	components?: EntityJson[];
 	effects?: EntityJson[];
 	children?: [any, EntityJson][];

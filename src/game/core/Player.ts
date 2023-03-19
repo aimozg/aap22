@@ -1,10 +1,19 @@
 import Chars from "../../utils/ui/chars";
 import {Creature} from "./Creature";
 import {Colors} from "../../utils/ui/canvas";
-import {initObjectBaseValues, UUID} from "../ecs/utils";
+import {UUID} from "../ecs/utils";
 import {EntityClassLoader} from "../ecs/EntityClassLoader";
 import {EntityJson} from "../ecs/EntityLoader";
+import {StatBaseValues} from "../ecs/decorators";
 
+@StatBaseValues({
+	level: 1,
+	speed: 4,
+	hpMax: 20,
+	naturalAim: 85,
+	naturalDamage: 4,
+	naturalDodge: 10
+})
 export class Player extends Creature {
 	static readonly CLSID = "Player";
 	constructor(uuid:number = UUID()) {
@@ -14,14 +23,6 @@ export class Player extends Creature {
 		this.glyph.ch = Chars.SMILE_WHITE;
 		this.glyph.fg = this.color;
 		this.tags.add("player");
-		initObjectBaseValues(this, {
-			level: 1,
-			speed: 4,
-			hpMax: 20,
-			naturalAim: 85,
-			naturalDamage: 4,
-			naturalDodge: 10
-		});
 		this.hp = this.hpMax;
 	}
 	faction = "player";

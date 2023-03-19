@@ -10,6 +10,7 @@ export interface ObjectStatNames {
 }
 
 export type StatId = keyof ObjectStatNames;
+export type StatValues = Partial<Record<StatId,number>>;
 
 export const enum StatAggregateType {
 	SUM,

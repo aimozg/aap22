@@ -1,4 +1,4 @@
-import {initObjectBaseValues, UUID} from "../ecs/utils";
+import {initStatBaseValues, UUID} from "../ecs/utils";
 import {ObjectComponent} from "../ecs/ObjectComponent";
 import {Creature, CreatureStatId, CreatureTag} from "./Creature";
 import {BlueprintClassLoader} from "../ecs/EntityClassLoader";
@@ -27,7 +27,7 @@ export class Monster extends Creature {
 		this.glyph.ch = blueprint.ch;
 		this.glyph.fg = blueprint.color;
 		if (blueprint.tags) for (let tag of blueprint.tags) this.tags.add(tag);
-		initObjectBaseValues(this, blueprint.stats);
+		initStatBaseValues(this, blueprint.stats);
 		this.setStatBaseValue("hp", this.hpMax, false);
 	}
 	static Loader = new class extends BlueprintClassLoader<Monster,MonsterBlueprint> {

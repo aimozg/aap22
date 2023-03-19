@@ -8,7 +8,7 @@ import {Cell, Level} from "./Level";
 import {GlyphData} from "../../utils/ui/GlyphLayer";
 import {objectClassName} from "../../utils/types";
 
-// TODO this could be a component instead
+// TODO this should be a ObjectComponent
 export abstract class MapObject extends GameObject {
 
 	protected constructor(clsid: string, bpid: string | null, uuid: number) {
@@ -32,7 +32,6 @@ export abstract class MapObject extends GameObject {
 		return `[${objectClassName(this)} ${this.name} (${this.pos.x};${this.pos.y})]`
 	}
 
-	abstract name: string;
 	abstract glyph: GlyphData;
 	abstract walkable: boolean;
 

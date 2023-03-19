@@ -33,10 +33,18 @@ export function getMetadataOrPut<T>(metadataKey:any, target:Object, defaultMetad
 	return value;
 }
 
-export function getOwnMetadataOrPut<T>(metadataKey:any, target:Object, defaultMetadataProvider:(target:Object)=>T):T {
-	if (Reflect.hasOwnMetadata(metadataKey, target)) return Reflect.getOwnMetadata(metadataKey, target);
+export function getOwnMetadataOrPut<T>(metadataKey:any, target:Object, defaultMetadataProvider:(target:Object)=>T, propertyKey?: string|symbol):T {
+	if (propertyKey !== undefined) {
+		if (Reflect.hasOwnMetadata(metadataKey, target, propertyKey)) return Reflect.getOwnMetadata(metadataKey, target, propertyKey);
+	} else {
+		if (Reflect.hasOwnMetadata(metadataKey, target)) return Reflect.getOwnMetadata(metadataKey, target);
+	}
 	let value = defaultMetadataProvider(target);
-	Reflect.defineMetadata(metadataKey, value, target);
+	if (propertyKey !== undefined) {
+		Reflect.defineMetadata(metadataKey, value, target, propertyKey);
+	} else {
+		Reflect.defineMetadata(metadataKey, value, target);
+	}
 	return value;
 }
 

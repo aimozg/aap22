@@ -16,11 +16,12 @@ export interface CommonEventMap {
 	onStatChange: GameStatEvent;
 }
 export type GameEventMap = CommonEventMap & StatChangeEventMap;
+export type GameEventType = keyof GameEventMap;
+
 export type GameEventHandlers = {
-	[T in GameEventType]?: (event:GameEventMap[T])=>void;
+	[T in GameEventType]?: (this: GameObject, event:GameEventMap[T])=>void;
 }
 
-export type GameEventType = keyof GameEventMap;
 
 export interface GameEvent {
 	object: GameObject;

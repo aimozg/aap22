@@ -318,7 +318,8 @@ export let GameController = new class {
 			if (!item) continue;
 			// TODO drop loot on nearest cell
 			if (cell.isEmpty) {
-				level.addObject(new DroppedItem(item), cell.xy);
+				let droppedItem = new DroppedItem(item);
+				level.addObject(droppedItem, cell.xy);
 			}
 		}
 	}

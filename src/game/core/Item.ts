@@ -94,6 +94,7 @@ export class DroppedItem extends MapObject {
 	constructor(public item: Item,
 	            uuid: number = UUID()) {
 		super("DroppedItem", null, uuid);
+		this.name = item.name;
 		item.setParentObject(this);
 	}
 
@@ -111,6 +112,5 @@ export class DroppedItem extends MapObject {
 
 	z = MapObject.Z_ITEM;
 	walkable: boolean = true;
-	get name() { return this.item.name }
 	get glyph() { return this.item.glyph }
 }

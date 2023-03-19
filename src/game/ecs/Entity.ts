@@ -23,6 +23,6 @@ export abstract class Entity {
 	loadCustomData?(data: Record<string, any>, ctx: EntityLoader): void;
 
 	dispatchEvent<T extends GameEventType>(type: T, event: GameEventMap[T]) {
-		this.hooks?.[type]?.(event);
+		this.hooks?.[type]?.call(this, event);
 	}
 }

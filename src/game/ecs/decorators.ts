@@ -5,17 +5,13 @@
 import "reflect-metadata"
 import {getOwnMetadataOrPut} from "../../utils/types";
 import {GameObject} from "./GameObject";
-import {StatId} from "./ObjectStat";
+import {StatId, StatValues} from "./ObjectStat";
 import {Entity} from "./Entity";
+import {initStatBaseValues} from "./utils";
 
-/** type: Map<StatId, number> */
-export let MetadataKeyStatBaseValues = Symbol("StatBaseValues");
-
-export function RawStat(baseValue: number, statId?: StatId): PropertyDecorator {
+export function RawStat(statId?: StatId): PropertyDecorator {
 	return (target: Object, propertyKey: StatId) => {
 		statId ??= propertyKey;
-		let baseValues = getOwnMetadataOrPut(MetadataKeyStatBaseValues, target, () => new Map<StatId, number>());
-		baseValues.set(statId, baseValue);
 		Object.defineProperty(target, statId, {
 			get(this: GameObject): any {
 				return this.getStatBaseValue(statId!);
@@ -26,11 +22,9 @@ export function RawStat(baseValue: number, statId?: StatId): PropertyDecorator {
 		});
 	}
 }
-export function BuffableStat(baseValue: number, statId?: StatId): PropertyDecorator {
+export function BuffableStat(statId?: StatId): PropertyDecorator {
 	return (target: Object, propertyKey: StatId) => {
 		statId ??= propertyKey;
-		let baseValues = getOwnMetadataOrPut(MetadataKeyStatBaseValues, target, () => new Map<StatId, number>());
-		baseValues.set(statId, baseValue);
 		Object.defineProperty(target, statId, {
 			get(this: GameObject): any {
 				return this.getStatValue(statId!);
@@ -42,12 +36,27 @@ export function BuffableStat(baseValue: number, statId?: StatId): PropertyDecora
 	}
 }
 
+/** value = StatValues */
+export let MetadataKeyStatBaseValues = Symbol("StatBaseValues");
+
+export function StatBaseValues(stats:StatValues):ClassDecorator {
+	return function(klass){
+		// define metadata on the prototype, not on the class constructor
+		let prototype = klass.prototype;
+		let parentStats:StatValues =
+			    Reflect.getMetadata(MetadataKeyStatBaseValues,prototype);
+		Reflect.defineMetadata(MetadataKeyStatBaseValues, {
+			...parentStats,
+			...stats
+		}, prototype);
+	}
+}
+
 export function initStatBaseValuesFromMetadata(object:GameObject) {
-	let baseValues = Reflect.getOwnMetadata(MetadataKeyStatBaseValues, object) as Map<StatId,number>|undefined;
-	if (!baseValues) return;
-	baseValues.forEach((value,key)=>{
-		object.setStatBaseValue(key, value, false);
-	});
+	let stats = Reflect.getMetadata(MetadataKeyStatBaseValues, object) as StatValues|undefined;
+	if (stats) {
+		initStatBaseValues(object, stats);
+	}
 }
 
 export interface EntityDataDescriptor {
