@@ -38,8 +38,8 @@ main {
   flex-grow: 1;
   display: grid;
   margin: 4px auto;
-  max-width: calc(960px + 360px);
-  grid-template-columns: 0 auto 360px 0;
+  max-width: calc(960px + 352px);
+  grid-template-columns: 0 auto 352px 0;
   //grid-template-columns: 1fr max(1fr, 960px) 300px 1fr;
   grid-template-rows: 4em 1fr;
 }
@@ -47,6 +47,7 @@ main {
   justify-self: stretch;
   max-width: 960px;
   white-space: pre-wrap;
+  word-break: break-all;
   grid-column: span 2;
   border-bottom: 4px solid #777;
   margin-bottom: 12px;
@@ -59,7 +60,7 @@ main {
 }
 .sidebar {
   font-family: IBMBIOS, monospace;
-  white-space: pre-wrap;
+  white-space: pre;
   border-left: 4px solid #777;
   margin-left: 14px;
   padding-left: 14px;
@@ -86,6 +87,10 @@ main {
 }
 .text-5, .text-yellow {
   color: #AA0;
+}
+.text-hl {
+  color: #FF0;
+  font-weight: bold;
 }
 .text-6, .text-green, .text-rarity-rare {
   color: #0A0;

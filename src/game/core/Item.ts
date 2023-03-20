@@ -33,26 +33,47 @@ export interface ArmorDef {
 	defense: number;
 }
 
+export interface UsableDef {
+	canUse?(this: Item, actor:Creature): boolean;
+	onUse(this: Item, actor:Creature): void;
+}
+
 export interface ItemBlueprint {
 	bpid: string;
 	name: string;
 	ch: string;
+	color?: string;
 	rarity?: ItemRarity;
 	weapon?: WeaponDef;
 	armor?: ArmorDef;
+	usable?: UsableDef;
 }
 
 export class WeaponComponent {
-	constructor(def:WeaponDef) {
+	constructor(public item:Item, def:WeaponDef) {
 		this.damage = def.damage;
 	}
 	damage: number;
 }
 export class ArmorComponent {
-	constructor(def:ArmorDef) {
+	constructor(public item:Item, def:ArmorDef) {
 		this.defense = def.defense;
 	}
 	defense: number;
+}
+export class UsableComponent {
+	constructor(public item:Item, def: UsableDef) {
+		this._canUse = def.canUse ?? (()=>true);
+		this._onUse = def.onUse;
+	}
+	private _canUse: (this:Item, actor: Creature)=>boolean;
+	private _onUse: (this:Item, actor: Creature)=>void;
+	canUse(actor:Creature):boolean {
+		return this._canUse.call(this.item, actor);
+	}
+	use(actor:Creature):void {
+		this._onUse.call(this.item, actor);
+	}
 }
 export class Item extends GameObject {
 	static readonly CLSID = "Item";
@@ -62,10 +83,11 @@ export class Item extends GameObject {
 		this.name = blueprint.name;
 		this.glyph = {
 			ch: blueprint.ch,
-			fg: ItemRarityToColor[this.rarity]
+			fg: blueprint.color ?? ItemRarityToColor[this.rarity]
 		};
-		this.weapon = blueprint.weapon ? new WeaponComponent(blueprint.weapon) : null;
-		this.armor = blueprint.armor ? new ArmorComponent(blueprint.armor) : null;
+		this.weapon = blueprint.weapon ? new WeaponComponent(this, blueprint.weapon) : null;
+		this.armor = blueprint.armor ? new ArmorComponent(this, blueprint.armor) : null;
+		this.usable = blueprint.usable ? new UsableComponent(this, blueprint.usable) : null;
 	}
 
 	rarity: ItemRarity;
@@ -74,7 +96,11 @@ export class Item extends GameObject {
 
 	weapon: WeaponComponent|null;
 	armor: ArmorComponent|null;
+	usable: UsableComponent|null;
 
+	get equipable():boolean {
+		return !!this.weapon || !!this.armor;
+	}
 	equipped(host:Creature) {
 		this.setParentObject(host);
 	}

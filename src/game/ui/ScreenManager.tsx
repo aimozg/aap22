@@ -3,9 +3,8 @@
  */
 import {LayeredCanvas} from "../../utils/ui/LayeredCanvas";
 import {GlyphLayer, GlyphSource} from "../../utils/ui/GlyphLayer";
-import {createElement, removeChildren} from "../../utils/ui/dom";
+import {removeChildren} from "../../utils/ui/dom";
 import {substitutePattern} from "../../utils/string";
-import Chars from "../../utils/ui/chars";
 import {GameObject} from "../ecs/GameObject";
 import {Creature} from "../core/Creature";
 import {objectClassName} from "../../utils/types";
@@ -18,6 +17,8 @@ import {DroppedItem, Item, ItemRarity} from "../core/Item";
 import {Corpse} from "../objects/Corpse";
 import BitmapFontIBMBIOS from "../../../assets/ibmbios";
 import {Game} from "../Game";
+import {DefaultSidebar} from "./DefaultSidebar";
+import {richText} from "./utils";
 
 export let FONTFACE = "IBMBIOS";
 export let FONTSIZE = "32px";
@@ -25,53 +26,9 @@ export let FONT = `${FONTSIZE} ${FONTFACE}`;
 export let CELLWIDTH = 32;
 export let CELLHEIGHT = 32;
 
-function richText(source:string):HTMLElement[] {
-	let result:HTMLElement[] = [];
-	let i = 0;
-	let chunk = "";
-	let cls = "";
-	function flush() {
-		if (chunk.length > 0) {
-			let props:Record<string,any> = {};
-			if (cls) {
-				if (cls[0] === '#') {
-					props.style = "color: "+cls;
-				} else {
-					props.class = "text-" + cls;
-				}
-			}
-			result.push(createElement("span", props,chunk));
-		}
-		chunk = "";
-		cls = "";
-	}
-	while (i < source.length) {
-		let c = source[i++];
-		if (c === '\\' && i < source.length) {
-			chunk += source[i++];
-		} else if (c === '{') {
-			flush();
-			let j = source.indexOf(';', i);
-			if (j > i && j < source.indexOf('}', i)) {
-				cls = source.substring(i, j);
-				i = j+1;
-			}
-		} else if (c === '}') {
-			flush();
-		} else {
-			chunk += c;
-		}
-	}
-	flush();
-	return result;
-}
-
-function itemNameSpan(item:Item|null|undefined):Node|string {
-	if (!item) return "-";
-	let itemdesc = "";
-	if (item.weapon) itemdesc += ` (${item.weapon.damage})`;
-	if (item.armor) itemdesc += ` [${item.armor.defense}]`;
-	return <span class={'text-rarity-'+ItemRarity[item.rarity].toLowerCase()}>{item.name}{itemdesc}</span>
+export interface ISidebar {
+	render(container:Element):void;
+	handleKeyEvent(hk:string):boolean;
 }
 
 export class ScreenManager {
@@ -87,7 +44,8 @@ export class ScreenManager {
 	private mainCanvas:LayeredCanvas;
 	particleLayer: ParticleLayer;
 	decalLayer: DecalLayer;
-	private sidebar: Element;
+	private sidebarNode: Element;
+	private sidebar: ISidebar = new DefaultSidebar();
 
 	afterLoad() {
 		this.particleLayer.clear();
@@ -112,7 +70,7 @@ export class ScreenManager {
 				{this.mainCanvas.element}
 			</div>
 			<div class="sidebar">
-				{this.sidebar=<div class="sidestatus"></div>}
+				{this.sidebarNode=<div class="sidestatus"></div>}
 			</div>
 			<div></div>
 		</main>);
@@ -249,40 +207,8 @@ export class ScreenManager {
 		this.frames++;
 	}
 	private updateSidebar() {
-		removeChildren(this.sidebar);
-
-		let player = Game.state.player;
-
-		this.sidebar.append(`Seed ${Game.state.seed}\n`);
-		this.sidebar.append(
-			<span class={Game.state.level.cleared?"text-blue":""}>Dungeon level {Game.state.depth}</span>);
-		this.sidebar.append(<br/>);
-		this.sidebar.append(<br/>);
-		this.sidebar.append(`Hero level ${player.level}\n`);
-		this.sidebar.append("HP: ");
-		for (let n = 1; n <= player.hpMax; n++) {
-			if (player.hp >= n) this.sidebar.append(<span class="text-green">{Chars.SQUARE_WHITE}</span>);
-			else this.sidebar.append(<span class="text-red">{Chars.SQUARE_BLACK}</span>)
-			if (n%10 === 0 && n < player.hpMax) this.sidebar.append("\n    ");
-		}
-		this.sidebar.append('\n');
-		this.sidebar.append(`Aim   : ${String(player.aim).padStart(3,' ')}%\n`);
-		this.sidebar.append(`Dodge : ${String(player.dodge).padStart(3,' ')}%\n`);
-		this.sidebar.append(`Damage: ${String(player.damage).padStart(3,' ')}\n`);
-
-		this.sidebar.append("\n");
-		this.sidebar.append("Weapon: ");
-		this.sidebar.append(itemNameSpan(player.weapon))
-		this.sidebar.append("\n");
-		this.sidebar.append("Armor : ");
-		this.sidebar.append(itemNameSpan(player.armor))
-		this.sidebar.append("\n");
-
-		this.sidebar.append("\n");
-		for (let i of player.inventory) {
-			this.sidebar.append(itemNameSpan(i));
-			this.sidebar.append("\n");
-		}
+		removeChildren(this.sidebarNode);
+		this.sidebar.render(this.sidebarNode);
 	}
 
 	addParticle(def:ParticleDef) {
@@ -299,7 +225,7 @@ export class ScreenManager {
 		if (!n) n = 1;
 		this.addParticle(spawnParticle(type,
 			gridXY.x, gridXY.y, 0.5,
-			direction.x/n, direction.y/n, 0))
+			direction.x/n, direction.y/n, 1))
 	}
 
 	getStatusLine():string {
@@ -347,13 +273,13 @@ export class ScreenManager {
 		}
 		return `{error;Unknown tag ${objectClassName(obj)}.${key}}`
 	}
-	logsub(message: string, substitutions: Record<string, string | GameObject | number>) {
+	logsub(message: string, substitutions: Record<string, string | GameObject | number>|[string|GameObject|number]) {
 		message = substitutePattern(message, str=>{
 			if (str.includes(';')) return undefined;
 			let parts = str.split('.');
 			let objname = parts[0];
 			let propname = parts[1] ?? "";
-			let object = substitutions[objname];
+			let object = (substitutions as any)[objname];
 			if (!object) return undefined;
 			if (object instanceof GameObject) return this.formatTag(object, propname);
 			if (typeof object === "number") {
@@ -387,5 +313,8 @@ export class ScreenManager {
 				delchars = 0;
 			}
 		}
+	}
+	handleKeyboard(hk:string):boolean {
+		return this.sidebar.handleKeyEvent(hk);
 	}
 }

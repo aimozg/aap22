@@ -89,5 +89,6 @@ namespace Chars {
 	export const BOX_QUESTION         = "�";
 	export const DAGGER               = "†";
 	export const DOUBLE_DAGGER        = "‡";
+	export const INVERSE_EXCLAMATION  = "¡";
 }
 export default Chars;

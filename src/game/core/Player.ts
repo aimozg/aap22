@@ -4,9 +4,9 @@ import {Colors} from "../../utils/ui/canvas";
 import {UUID} from "../ecs/utils";
 import {EntityClassLoader} from "../ecs/EntityClassLoader";
 import {EntityJson} from "../ecs/EntityLoader";
-import {StatBaseValues} from "../ecs/decorators";
+import {BaseStats} from "../ecs/decorators";
 
-@StatBaseValues({
+@BaseStats({
 	level: 1,
 	speed: 4,
 	hpMax: 20,

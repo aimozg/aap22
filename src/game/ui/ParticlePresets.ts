@@ -61,21 +61,36 @@ function toDecal(p:Particle, color:string, size:number) {
 	}
 }
 
-export type ParticlePresetId = "blood"|"spark"|"bone";
+export type ParticlePresetId = "blood"|"spark"|"bone"|"heal";
 
 export function spawnParticle(
 	preset:ParticlePresetId, x:number, y:number, z:number, vx:number, vy: number, vz:number):ParticleDef {
 	let fxrng = Game.fxrng,
 	    particles = Game.screenManager.particleLayer.particles;
 
+	let xspread = 0.25, yspread = 0.25,
+	    vxspread = 0.75, vyspread = 0.75, vzspread = 1,
+	    vbase = 4, vzbase = 4, ttl = 100, g = 1
+	;
+	if (preset === "heal") {
+		xspread = 0.5;
+		yspread = 0.5;
+		vxspread = 0;
+		vyspread = 0;
+		vzbase = 2;
+		vzspread = 0.5;
+		g = 0;
+		ttl = 0.5;
+	}
 	let pd:ParticleDef = {
-		x: (x+fxrng.nextFloat(0.25,0.75))*CELLWIDTH,
-		y: (y+fxrng.nextFloat(0.75,1.25))*CELLHEIGHT,
+		x: (x+0.5+fxrng.nextFloat(-xspread,xspread))*CELLWIDTH,
+		y: (y+1.0+fxrng.nextFloat(-yspread,yspread))*CELLHEIGHT,
 		z: z*CELLHEIGHT,
-		ttl: 100,
-		vx: 4*CELLWIDTH*(fxrng.nextFloat(-0.75,0.75)+vx),
-		vy: 4*CELLHEIGHT*(fxrng.nextFloat(-0.75,0.75)+vy),
-		vz: 4*fxrng.nextFloat(2,0)*CELLHEIGHT,
+		ttl: ttl,
+		vx: vbase*CELLWIDTH*(fxrng.nextFloat(-vxspread,vxspread)+vx),
+		vy: vbase*CELLHEIGHT*(fxrng.nextFloat(-vxspread,vyspread)+vy),
+		vz: vzbase*CELLHEIGHT*(fxrng.nextFloat(-vzspread,vzspread)+vz),
+		az: g*particles.defaultAZ,
 		color: "white"
 	};
 	switch (preset) {
@@ -110,6 +125,9 @@ export function spawnParticle(
 				hitWallBounce(p);
 			}
 			// pd.onDeath = p=>toDecal(p, Colors.WHITE, 4);
+			break;
+		case "heal":
+			pd.color = Colors.LIGHTGREEN;
 			break;
 	}
 	return pd

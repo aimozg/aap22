@@ -9,11 +9,11 @@ import {ObjectComponent} from "./ObjectComponent";
 import {GameEventMap, GameEventType} from "./GameEvent";
 import {ObjectStat, StatId} from "./ObjectStat";
 import {getOrPut} from "../../utils/collections";
-import {initStatBaseValuesFromMetadata, StatBaseValues} from "./decorators";
+import {BaseStats, initStatBaseValuesFromMetadata} from "./decorators";
 
 export type ChildGameObject = [any, GameObject];
 
-@StatBaseValues({hp:0})
+@BaseStats({hp:0})
 export abstract class GameObject extends Entity {
 	protected constructor(
 		clsid: string,

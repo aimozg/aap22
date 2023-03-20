@@ -11,6 +11,7 @@ import {Item} from "../core/Item";
 import {WeaponLib} from "../data/WeaponLib";
 import {Monster} from "../core/Monster";
 import {Game} from "../Game";
+import {UsableLib} from "../data/UsableLib";
 
 let logger = LogManager.loggerFor("RoomFiller");
 
@@ -29,6 +30,7 @@ function fillRoom(level:Level, room:Room, threatLevel:number) {
 				new MonsterAI());
 			if (maprng.nextBoolean(0.25)) {
 				let id = maprng.pickWeightedTuple([
+					[2, UsableLib.smallHealingPotion],
 					[1, WeaponLib.dagger],
 					[0.5, WeaponLib.sword],
 					[0.25, WeaponLib.greatsword],

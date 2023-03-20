@@ -18,6 +18,7 @@ import {UUID} from "./ecs/utils";
 import {EntityClassLoader} from "./ecs/EntityClassLoader";
 import {EntityJson, EntityLoader} from "./ecs/EntityLoader";
 import {Game} from "./Game";
+import {UsableLib} from "./data/UsableLib";
 
 let logger = LogManager.loggerFor("GameState");
 
@@ -93,6 +94,7 @@ export class GameState extends AbstractRootGameState {
 		this.level.cells[0].tile = Tiles.floor;
 		this.player              = new Player();
 		this.player.setWeapon(new Item(WeaponLib.dagger));
+		this.player.addItem(new Item(UsableLib.smallHealingPotion));
 		this.level.addObject(this.player, {x: 0, y: 0});
 	}
 

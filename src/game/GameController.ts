@@ -19,8 +19,8 @@ import {ChunkMapGen} from "./mapgen/ChunkMapGen";
 import {dungeonChunks} from "./mapgen/dungeonChunks";
 import {fillRooms} from "./mapgen/RoomFiller";
 import {fillDijkstraMap} from "../utils/grid/dijkstra";
-import {atLeast} from "../utils/math/utils";
-import {DroppedItem} from "./core/Item";
+import {atLeast, coerce} from "../utils/math/utils";
+import {DroppedItem, Item} from "./core/Item";
 
 let logger = LogManager.loggerFor("GameController");
 
@@ -246,6 +246,7 @@ export let GameController = new class {
 	}
 
 	actPickup(actor: Creature, item:DroppedItem) {
+		logger.debug("actPickup {} {}",actor, item);
 		if (actor === Game.state.player) {
 			// TODO actor.log?.()
 			Game.screenManager.logsub("You pick up {item}. ", {item:item.item});
@@ -254,6 +255,49 @@ export let GameController = new class {
 		if (actor.addItem(item.item)) {
 			item.parentEntity?.removeObject(item);
 		}
+	}
+	actDropInventoryItem(actor: Creature, item:Item) {
+		logger.debug("actDropInventoryItem {} {}",actor, item);
+		if (actor === Game.state.player) {
+			// TODO actor.log?.()
+			Game.screenManager.logsub("You drop {item}. ", {item:item});
+		}
+		actor.ap = 0;
+		if (actor.removeItem(item)) {
+			Game.gameController.doDropItem(item, actor.pos);
+		}
+	}
+	actSwapOrEquipWeapon(actor: Creature, item:Item) {
+		logger.debug("actSwapOrEquipWeapon {} {}",actor, item);
+		if (actor.weapon) {
+			let oldWeapon = actor.weapon;
+			// TODO unequip
+			actor.setWeapon(null);
+			this.actEquipWeaponFromInventory(actor, item);
+			actor.addItem(oldWeapon);
+		} else {
+			this.actEquipWeaponFromInventory(actor, item);
+			return
+		}
+	}
+	actEquipWeaponFromInventory(actor: Creature, item:Item) {
+		logger.debug("actEquipWeaponFromInventory {} {}",actor, item);
+		if (!item.weapon) throw new Error(`Cannot equip ${item} as weapon`);
+		if (actor === Game.state.player) {
+			// TODO actor.log?.()
+			Game.screenManager.logsub("You equip {0}. ",[item]);
+		}
+		actor.ap = 0;
+		actor.removeItem(item);
+		actor.setWeapon(item);
+	}
+	actUseOnSelf(actor: Creature, item:Item) {
+		logger.debug("actUseOnSelf {} {}",actor, item);
+		if (!item.usable) throw new Error(`Cannot use ${item} on self`);
+		if (!item.usable.canUse(actor)) return;
+		actor.ap = 0;
+		actor.removeItem(item);
+		item.usable.use(actor);
 	}
 
 	//-----------//
@@ -294,6 +338,13 @@ export let GameController = new class {
 			this.doKill(target, source);
 		}
 	}
+	doHeal(target:Creature, amount:number):void {
+		logger.info("doHeal {} {}", target, amount);
+		amount = coerce(amount, 0, target.hpMax-target.hp);
+		if (amount <= 0) return
+		target.hp += amount;
+		Game.screenManager.shootParticlesFrom(amount*5, target.pos, {x:0,y:0},"heal");
+	}
 	doKill(target:Creature, source:MapObject|null) {
 		logger.info("doKill {} {}",target,source);
 		/* TODO check for 'dead' condition
@@ -316,12 +367,19 @@ export let GameController = new class {
 		// TODO gibbing
 		for (let item of target.inventory) {
 			if (!item) continue;
-			// TODO drop loot on nearest cell
-			if (cell.isEmpty) {
-				let droppedItem = new DroppedItem(item);
-				level.addObject(droppedItem, cell.xy);
-			}
+			this.doDropItem(item, cell.xy);
 		}
+	}
+	doDropItem(item:Item, xy:XY):XY {
+		// TODO drop loot on nearest cell
+		let level = Game.state.level;
+		let cell = level.cellAt(xy);
+		if (cell.isEmpty) {
+			let droppedItem = new DroppedItem(item);
+			level.addObject(droppedItem, cell.xy);
+			return cell.xy;
+		}
+		return {x:0,y:0};
 	}
 
 	//-------//
@@ -350,6 +408,16 @@ export let GameController = new class {
 				Game.screenManager.log("Nothing to pickup! ");
 			} else {
 				this.actPickup(player, item);
+			}
+		})
+	}
+	playerSmartEquip(item:Item) {
+		this.queuePlayerAction(()=>{
+			let player = Game.state.player;
+			let i = player.inventory.indexOf(item);
+			if (i < 0) return;
+			if (item.weapon) {
+				this.actSwapOrEquipWeapon(player, item);
 			}
 		})
 	}

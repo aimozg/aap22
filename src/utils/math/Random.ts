@@ -28,8 +28,7 @@ export abstract class Random {
 	 */
 	nextFloat(): number;
 	nextFloat(...args: number[]): number {
-		let x = this.next01();
-		if (arguments.length === 0) return x;
+		if (arguments.length === 0) return this.next01();
 		let min, max;
 		if (arguments.length === 2) {
 			min = arguments[0];
@@ -38,8 +37,9 @@ export abstract class Random {
 			min = 0;
 			max = arguments[0];
 		}
+		if (max === min) return min;
 		let d = max - min;
-		return x * d + min;
+		return this.next01() * d + min;
 	}
 
 	nextBits(bitCount: number): number {

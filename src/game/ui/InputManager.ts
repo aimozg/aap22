@@ -3,6 +3,7 @@
  */
 import {KeyCodes} from "../../utils/ui/KeyCodes";
 import {GameController} from "../GameController";
+import {Game} from "../Game";
 
 let hkActions = {
 	MoveUpLeft() { GameController.playerSmartAction(-1,-1) },
@@ -42,7 +43,9 @@ export class InputManager {
 	}
 	onKeyDown(e:KeyboardEvent) {
 		let hk = KeyCodes.eventToHkString(e);
-		if (hk in hotkeys) {
+		if (Game.screenManager.handleKeyboard(hk)) {
+			e.preventDefault();
+		} else if (hk in hotkeys) {
 			e.preventDefault();
 			hotkeys[hk]();
 		}

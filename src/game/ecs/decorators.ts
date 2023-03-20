@@ -37,9 +37,9 @@ export function BuffableStat(statId?: StatId): PropertyDecorator {
 }
 
 /** value = StatValues */
-export let MetadataKeyStatBaseValues = Symbol("StatBaseValues");
+export let MetadataKeyStatBaseValues = Symbol("BaseStats");
 
-export function StatBaseValues(stats:StatValues):ClassDecorator {
+export function BaseStats(stats:StatValues):ClassDecorator {
 	return function(klass){
 		// define metadata on the prototype, not on the class constructor
 		let prototype = klass.prototype;

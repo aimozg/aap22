@@ -17,6 +17,7 @@ import {WeaponLib} from "./data/WeaponLib";
 import {LevelExit} from "./objects/LevelExit";
 import {MonsterLib} from "./data/MonsterLib";
 import {MonsterAI} from "./combat/MonsterAI";
+import {UsableLib} from "./data/UsableLib";
 
 
 export namespace Game {
@@ -40,6 +41,7 @@ export namespace Game {
 		entityLoader.registerClassLoader(GameState.Loader);
 		entityLoader.registerClassLoader(Item.Loader);
 		Item.Loader.registerBlueprints(Object.values(WeaponLib));
+		Item.Loader.registerBlueprints(Object.values(UsableLib));
 		entityLoader.registerClassLoader(Level.Loader);
 		entityLoader.registerClassLoader(LevelExit.Loader);
 		entityLoader.registerClassLoader(Monster.Loader);

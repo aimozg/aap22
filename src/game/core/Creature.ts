@@ -4,7 +4,7 @@ import {coerce} from "../../utils/math/utils";
 import {Item} from "./Item";
 import {ObjectComponent} from "../ecs/ObjectComponent";
 import {ChildGameObject, GameObject} from "../ecs/GameObject";
-import {BuffableStat, EntityData, RawStat, StatBaseValues} from "../ecs/decorators";
+import {BaseStats, BuffableStat, EntityData, RawStat} from "../ecs/decorators";
 
 export interface CreatureStatNames {
 	level: number;
@@ -27,7 +27,7 @@ export type CreatureTag =
 	"undead"|"beast"|"demon"|"construct"|"humanoid"|
 	"bones";
 
-@StatBaseValues({
+@BaseStats({
 	level: 1,
 	ap: 0,
 	hp: 1,
@@ -170,6 +170,9 @@ export abstract class Creature extends MapObject {
 		// TODO inventory size
 		this.inventory.push(item);
 		return true;
+	}
+	removeItem(item:Item):boolean {
+		return this.inventory.remove(item);
 	}
 }
 
