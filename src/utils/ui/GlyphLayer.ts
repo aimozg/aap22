@@ -7,10 +7,12 @@ import {AnimatedColor, animatedColorToRGB} from "./canvas";
 import {milliTime} from "../time";
 import {BitmapFont} from "./BitmapFont";
 import {XYRect} from "../grid/geom";
+import {Dir8List} from "../grid/grid";
 
 export interface GlyphData {
 	ch: string;
 	fg: AnimatedColor;
+	stroke?: AnimatedColor;
 	bg?: AnimatedColor;
 }
 
@@ -69,10 +71,15 @@ export class GlyphLayer extends AbstractCanvasLayer {
 			c2d.fillRect(x, y, this.cellWidth, this.cellHeight)
 		}
 		if (glyph.ch && glyph.ch !== ' ') {
+			if (glyph.stroke) {
+				let stroke = animatedColorToRGB(glyph.stroke, phase).toString();
+				for (let dir of Dir8List) {
+					this.font.drawChar(c2d, glyph.ch, stroke, x+dir.dx*this.scaleX,y+dir.dy*this.scaleY, this.scaleX, this.scaleY);
+				}
+			}
 			/*
 			c2d.fillStyle = animatedColorToRGB(glyph.fg, phase).toString();
 			c2d.fillText(glyph.ch, this.cellWidth/2 + x, y + this.cellHeight/2)
-
 			 */
 			let fg = animatedColorToRGB(glyph.fg, phase).toString();
 			this.font.drawChar(c2d, glyph.ch, fg, x, y, this.scaleX, this.scaleY);

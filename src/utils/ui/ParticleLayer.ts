@@ -40,6 +40,7 @@ export class ParticleStore {
 	particles: Particle[] = [];
 	defaultAZ = 0;
 	defaultSize = 2;
+	maxz = 0;
 	clear() {
 		this.particles = [];
 	}
@@ -74,7 +75,12 @@ export class ParticleStore {
 				p.x += p.vx * dt;
 				p.y += p.vy * dt;
 				p.z += p.vz * dt;
-				if (p.z <= 0) {
+				if (this.maxz && p.z > this.maxz) {
+					p.z = this.maxz;
+					if (p.vz > 0) {
+						p.vz = 0;
+					}
+				} else if (p.z <= 0) {
 					p.v = false;
 					p.ttl = 0;
 				}

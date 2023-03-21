@@ -18,7 +18,7 @@ export enum ItemRarity {
 	UNIQUE
 }
 export let ItemRarityToColor:Record<ItemRarity,string> = {
-	[ItemRarity.NORMAL]: Colors.WHITE,
+	[ItemRarity.NORMAL]: Colors.BLACK,
 	[ItemRarity.MAGICAL]: Colors.BLUE,
 	[ItemRarity.RARE]: Colors.GREEN,
 	[ItemRarity.UNIQUE]: Colors.ORANGE,
@@ -83,7 +83,8 @@ export class Item extends GameObject {
 		this.name = blueprint.name;
 		this.glyph = {
 			ch: blueprint.ch,
-			fg: blueprint.color ?? ItemRarityToColor[this.rarity]
+			fg: blueprint.color ?? Colors.LIGHTGRAY,
+			stroke: ItemRarityToColor[this.rarity]
 		};
 		this.weapon = blueprint.weapon ? new WeaponComponent(this, blueprint.weapon) : null;
 		this.armor = blueprint.armor ? new ArmorComponent(this, blueprint.armor) : null;

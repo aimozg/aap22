@@ -6,6 +6,7 @@ import {MapObject} from "../core/MapObject";
 import * as tinycolor from "tinycolor2";
 import {GlyphData} from "../../utils/ui/GlyphLayer";
 import {UUID} from "../ecs/utils";
+import {Colors} from "../../utils/ui/canvas";
 
 export class Corpse extends MapObject {
 	constructor(
@@ -16,7 +17,8 @@ export class Corpse extends MapObject {
 		super("Corpse", null, uuid);
 		this.glyph = {
 			ch: '⁔',
-			fg: tinycolor(color)
+			fg: tinycolor(color),
+			stroke: Colors.VDARKGRAY
 		};
 	}
 	glyph: GlyphData;

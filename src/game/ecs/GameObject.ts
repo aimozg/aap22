@@ -6,7 +6,7 @@ import {objectToString, Type} from "../../utils/types";
 import {Effect} from "./Effect";
 import {Entity} from "./Entity";
 import {ObjectComponent} from "./ObjectComponent";
-import {GameEventMap, GameEventType} from "./GameEvent";
+import {GameEventHandlers, GameEventMap, GameEventType} from "./GameEvent";
 import {ObjectStat, StatId} from "./ObjectStat";
 import {getOrPut} from "../../utils/collections";
 import {BaseStats, initStatBaseValuesFromMetadata} from "./decorators";
@@ -118,7 +118,7 @@ export abstract class GameObject extends Entity {
 		}
 	}
 
-	registerHook<T extends GameEventType>(type: T, handler: (event:GameEventMap[T])=>void){
+	registerOwnHook<T extends GameEventType>(type: T, handler: GameEventHandlers[T]){
 		(this.hooks ??= {})[type] = handler;
 	}
 

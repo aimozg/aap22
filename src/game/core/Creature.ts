@@ -84,7 +84,7 @@ export abstract class Creature extends MapObject {
 	@EntityData()
 	name: string;
 	color: string;
-	glyph: GlyphData = {ch: '@', fg: '#ffffff'};
+	glyph: GlyphData = {ch: '@', fg: '#ffffff', stroke:'#000000'};
 	z               = MapObject.Z_CREATURE;
 	walkable        = false;
 	@EntityData()

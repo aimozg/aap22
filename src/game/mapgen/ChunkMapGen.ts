@@ -121,6 +121,10 @@ function joinWeight(t1:ChunkType, t2:ChunkType):number {
 	return 1;
 }
 
+// TODO:
+//  - fill busymap first and maintain chunk list, fill tiles last
+//  - enable undo
+//  - avoid dead ends (corridors not leading to room)
 export namespace ChunkMapGen {
 
 	export function generateLevel(

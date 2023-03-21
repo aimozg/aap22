@@ -61,52 +61,125 @@ function toDecal(p:Particle, color:string, size:number) {
 	}
 }
 
+export interface ParticlePreset {
+	/** 0: left, 1: right */
+	x0: number;
+	/** starting pos spread, gaussian -xspread..+xspread */
+	xspread: number;
+	/** 0: top, 1: bottom */
+	y0: number;
+	/** starting pos spread, gaussian -yspread..+yspread */
+	yspread: number;
+	/** 0: floor, 1: ceiling */
+	z0: number;
+	/** starting pos spread, gaussian -zspread..+zspread */
+	zspread: number;
+	/** starting XY speed (cells/sec) */
+	vxybase: number;
+	/** starting XY speed spread, gaussian -vxyspread..+vxyspread */
+	vxyspread: number;
+	/** starting Z speed (cells/sec) */
+	vzbase: number;
+	/** starting Z speed spread, gaussian -vxyspread..+vxyspread */
+	vzspread: number;
+	/** gravity factor */
+	g: number;
+	/** time to live, seconds */
+	ttl: number;
+	/** ttl spread, gaussian -ttlspread..+ttlspread */
+	ttlspread: number;
+}
+
+export let ParticlePresets = {
+	"blood": {
+		x0: 0.5,
+		xspread: 0.25,
+		y0: 1,
+		yspread: 0.25,
+		z0: 0.5,
+		zspread: 0,
+		vxybase: 4,
+		vxyspread: 0.75,
+		vzbase: 4,
+		vzspread: 1,
+		g: 1,
+		ttl: 10,
+		ttlspread: 0,
+	},
+	"spark": {
+		x0: 0.5,
+		xspread: 0.25,
+		y0: 1,
+		yspread: 0.25,
+		z0: 0.5,
+		zspread: 0,
+		vxybase: 8,
+		vxyspread: 0.75,
+		vzbase: 2,
+		vzspread: 1,
+		g: 0.5,
+		ttl: 1/3,
+		ttlspread: 1/3
+	},
+	"bone": {
+		x0: 0.5,
+		xspread: 0.25,
+		y0: 1,
+		yspread: 0.25,
+		z0: 0.5,
+		zspread: 0,
+		vxybase: 4,
+		vxyspread: 0.75,
+		vzbase: 1,
+		vzspread: 1,
+		g: 1,
+		ttl: 1/8,
+		ttlspread: 1/16,
+	},
+	"heal": {
+		x0: 0.5,
+		xspread: 0.5,
+		y0: 1,
+		yspread: 0.5,
+		z0: 0.5,
+		zspread: 0,
+		vxybase: 0,
+		vxyspread: 0,
+		vzbase: 2,
+		vzspread: 0.5,
+		g: 0,
+		ttl: 0.5,
+		ttlspread: 0.1
+	}
+} satisfies Record<string,ParticlePreset>;
+
 export type ParticlePresetId = "blood"|"spark"|"bone"|"heal";
 
 export function spawnParticle(
-	preset:ParticlePresetId, x:number, y:number, z:number, vx:number, vy: number, vz:number):ParticleDef {
+	presetId:ParticlePresetId, x:number, y:number, z:number, vx:number, vy: number, vz:number):ParticleDef {
 	let fxrng = Game.fxrng,
 	    particles = Game.screenManager.particleLayer.particles;
-
-	let xspread = 0.25, yspread = 0.25,
-	    vxspread = 0.75, vyspread = 0.75, vzspread = 1,
-	    vbase = 4, vzbase = 4, ttl = 100, g = 1
-	;
-	if (preset === "heal") {
-		xspread = 0.5;
-		yspread = 0.5;
-		vxspread = 0;
-		vyspread = 0;
-		vzbase = 2;
-		vzspread = 0.5;
-		g = 0;
-		ttl = 0.5;
-	}
+	let preset = ParticlePresets[presetId];
 	let pd:ParticleDef = {
-		x: (x+0.5+fxrng.nextFloat(-xspread,xspread))*CELLWIDTH,
-		y: (y+1.0+fxrng.nextFloat(-yspread,yspread))*CELLHEIGHT,
-		z: z*CELLHEIGHT,
-		ttl: ttl,
-		vx: vbase*CELLWIDTH*(fxrng.nextFloat(-vxspread,vxspread)+vx),
-		vy: vbase*CELLHEIGHT*(fxrng.nextFloat(-vxspread,vyspread)+vy),
-		vz: vzbase*CELLHEIGHT*(fxrng.nextFloat(-vzspread,vzspread)+vz),
-		az: g*particles.defaultAZ,
+		x: CELLWIDTH * fxrng.nextGaussian(preset.xspread, x + preset.x0, 3),
+		y: CELLHEIGHT * fxrng.nextGaussian(preset.yspread, y + preset.y0, 3),
+		z: CELLHEIGHT * fxrng.nextGaussian(preset.zspread, z + preset.z0, 3),
+		ttl: fxrng.nextGaussian(preset.ttlspread, preset.ttl, 3),
+		vx: CELLWIDTH * preset.vxybase * fxrng.nextGaussian(preset.vxyspread, vx, 3),
+		vy: CELLHEIGHT * preset.vxybase * fxrng.nextGaussian(preset.vxyspread, vy, 3),
+		vz: CELLHEIGHT * preset.vzbase * fxrng.nextGaussian(preset.vzspread, vz, 3),
+		az: preset.g*particles.defaultAZ,
 		color: "white"
 	};
-	switch (preset) {
+	console.log('spawned ',pd);
+	switch (presetId) {
 		case "blood":
-			pd.ttl = 10;
 			pd.color = Colors.LIGHTRED;
 			pd.onTick = p=>hitWallDrop(p);
 			pd.onDeath = p=>toDecal(p, Colors.RED, 8);
 			break;
 		case "spark":
 			pd.color = Colors.WHITE;
-			pd.az = particles.defaultAZ/2;
-			pd.ttl = fxrng.nextFloat(0.25,1.0);
-			pd.vx! *= 2;
-			pd.vy! *= 2;
-			pd.vz! *= 0.5;
 			let colors = [Colors.WHITE,Colors.LIGHTYELLOW,Colors.LIGHTORANGE,Colors.LIGHTRED];
 			pd.onTick = (p)=>{
 				hitWallBounce(p);
@@ -115,12 +188,6 @@ export function spawnParticle(
 			break;
 		case "bone":
 			pd.color = Colors.WHITE;
-			pd.az = particles.defaultAZ/2;
-			pd.ttl = fxrng.nextFloat(0.125,0.25);
-			// pd.size = particleLayer.defaultSize*2;
-			// pd.vx! *= 2;
-			// pd.vy! *= 2;
-			pd.vz! *= 0.25;
 			pd.onTick = (p)=>{
 				hitWallBounce(p);
 			}

@@ -52,8 +52,8 @@ export let GameController = new class {
 		while (true) {
 			let level = ChunkMapGen.generateLevel(
 				Game.state.maprng,
-				80,
-				80,
+				40,
+				40,
 				dungeonChunks
 			);
 			if (level.rooms.length > 10) {

@@ -4,6 +4,8 @@
 
 import {GameObject} from "./GameObject";
 import {StatId} from "./ObjectStat";
+import {XY} from "../../utils/grid/geom";
+import {DamageType} from "../combat/DamageType";
 
 export type OnStatChangeEventType = `onStatChange_${StatId}`;
 
@@ -14,6 +16,8 @@ export interface CommonEventMap {
 	onTick: GameTickEvent;
 	// TODO consider removing in favor of specialized types
 	onStatChange: GameStatEvent;
+	onStep: GameStepEvent;
+	onBeforeAttack: GameBeforeAttackEvent;
 }
 export type GameEventMap = CommonEventMap & StatChangeEventMap;
 export type GameEventType = keyof GameEventMap;
@@ -32,4 +36,18 @@ export interface GameStatEvent extends GameEvent {
 	stat: StatId;
 	oldValue: number;
 	newValue: number;
+}
+export interface GameStepEvent extends GameEvent {
+	actor: GameObject;
+	oldPos: XY;
+}
+export interface GameBeforeAttackEvent extends GameEvent {
+	attacker: GameObject;
+	target: GameObject;
+}
+export interface GameAfterAttackEvent extends GameEvent {
+	attacker: GameObject;
+	target: GameObject;
+	damage: number;
+	damageType: DamageType;
 }

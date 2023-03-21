@@ -106,7 +106,11 @@ export class ScreenManager {
 				let i = Game.state.level.xy2i(x,y);
 				if (!Game.state.vismap[i]) return null;
 				let cell = Game.state.level.cellAt({x,y});
-				if (cell.objects.length > 0) return null;
+				if (cell.objects.length > 0) return {
+					ch: '',
+					fg: '',
+					bg: cell.tile.bg
+				};
 				/*
 				let d = Game.state.approachPlayerMap[i];
 				if (d >= 0 && d <= 9) {
@@ -130,9 +134,11 @@ export class ScreenManager {
 				let mobj = cell.topMobj();
 				let glyph = mobj?.glyph;
 				if (glyph) glyph={...glyph};
+				/*
 				if (glyph && !glyph.bg) {
 					glyph.bg = cell.tile.bg;
 				}
+				 */
 				return glyph;
 			}
 		};
@@ -156,6 +162,7 @@ export class ScreenManager {
 		this.particleLayer = new ParticleLayer("particles");
 		this.particleLayer.particles.defaultAZ = -16*CELLHEIGHT;
 		this.particleLayer.particles.defaultSize = 4;
+		this.particleLayer.particles.maxz = CELLHEIGHT*2;
 		this.particleLayer.res = 4;
 		this.mainCanvas.addLayer(this.particleLayer);
 

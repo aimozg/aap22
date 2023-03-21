@@ -105,7 +105,8 @@ export abstract class Random {
 
 	private savedGaussian: number;
 	private hasNextGaussian = false;
-	nextGaussian(variance: number = 1.0, mean: number = 0.0): number {
+	nextGaussian(variance: number = 1.0, mean: number = 0.0, maxSigma:number = 0.0): number {
+		if (variance === 0) return mean;
 		let g: number;
 		if (this.hasNextGaussian) {
 			this.hasNextGaussian = false;
@@ -121,6 +122,9 @@ export abstract class Random {
 			this.savedGaussian = v2 * multiplier;
 			this.hasNextGaussian = true;
 			g = v1 * multiplier;
+		}
+		if (maxSigma && isFinite(maxSigma)) {
+			while (g > maxSigma || g < -maxSigma) g /= 2;
 		}
 		return g * variance + mean;
 	}

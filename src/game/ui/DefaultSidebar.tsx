@@ -93,11 +93,8 @@ export class DefaultSidebar implements ISidebar {
 		container.append("\n");
 
 		container.append("\n");
-		if (this.inventoryMode) {
-			container.append(<span class="text-hl">Inventory:</span>);
-		} else {
-			container.append("Inventory:");
-		}
+		container.append(<span class="text-hl">I</span>);
+		container.append(<span class={this.inventoryMode?"text-hl":""}>nventory</span>);
 		container.append("\n");
 		for (let i = 0; i < player.inventory.length; i++){
 			let item = player.inventory[i];

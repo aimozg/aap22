@@ -10,16 +10,16 @@ export interface DamageType {
 	color: string;
 }
 
-export namespace DamageTypes {
-	export let PHYSICAL: DamageType = {
+export let DamageTypes = {
+	PHYSICAL: {
 		name: "physical",
 		cls: "orange",
 		color: Colors.ORANGE
-	};
-	export let FIRE: DamageType = {
+	},
+	FIRE: {
 		name: "fire",
 		cls: "red",
 		color: Colors.RED
 	}
-}
+} satisfies Record<string,DamageType>;
 
