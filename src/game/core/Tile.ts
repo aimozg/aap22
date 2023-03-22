@@ -45,8 +45,9 @@ export namespace Tiles {
 	});
 	export const wall:Tile = registerTile({
 		id: 2,
-		ch: Chars.BLOCK_100,
-		fg: tinycolor(Colors.LIGHTGRAY),
+		ch: '',
+		fg: '',
+		bg: tinycolor(Colors.LIGHTGRAY),
 		vision: false,
 		walk: false
 	});
@@ -62,6 +63,7 @@ export namespace Tiles {
 		id: 4,
 		ch: Chars.INVERSE_CIRCLE_WHITE,
 		fg: tinycolor(Colors.WHITE),
+		bg: defaultBg,
 		vision: false,
 		walk: false
 	});

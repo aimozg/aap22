@@ -3,10 +3,14 @@
  */
 
 import {BitmapFont} from "../src/utils/ui/BitmapFont";
-import IBMVGA8x16Data from "./ibmvga8.png";
+import IBMVGA8x16ExData from "./ibmvga8x.png";
 
-let IBMVGA8x16Def = {
-    charWidth: 16,
+/**
+ * A 8x16 font rendered into 16x16 cells, centered.
+ * Box drawing characters are updated to fill 16x16 cell.
+ */
+let IBMVGA8x16ExDef = {
+    charWidth: 32,
     charHeight: 32,
     gapx: 0,
     gapy: 0,
@@ -38,6 +42,6 @@ let IBMVGA8x16Def = {
     ],
     placeholderChar: '�'
 }
-let BitmapFontIBMVGA8x16 = BitmapFont.fromDataURL(IBMVGA8x16Def, IBMVGA8x16Data);
+let BitmapFontIBMVGA8x16Ex = BitmapFont.fromDataURL(IBMVGA8x16ExDef, IBMVGA8x16ExData);
 
-export default BitmapFontIBMVGA8x16;
+export default BitmapFontIBMVGA8x16Ex;

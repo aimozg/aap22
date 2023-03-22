@@ -15,14 +15,14 @@ import {DecalLayer} from "../../utils/ui/DecalLayer";
 import {ParticlePresetId, spawnParticle} from "./ParticlePresets";
 import {DroppedItem, Item, ItemRarity} from "../core/Item";
 import {Corpse} from "../objects/Corpse";
-import BitmapFontIBMBIOS from "../../../assets/ibmbios";
 import {Game} from "../Game";
 import {DefaultSidebar} from "./DefaultSidebar";
 import {richText} from "./utils";
+import BitmapFontIBMVGA8x16Ex from "../../../assets/ibmvga8x";
 
-export let FONTFACE = "IBMBIOS";
-export let FONTSIZE = "32px";
-export let FONT = `${FONTSIZE} ${FONTFACE}`;
+// export let FONTFACE = "IBMBIOS";
+// export let FONTSIZE = "32px";
+// export let FONT = `${FONTSIZE} ${FONTFACE}`;
 export let CELLWIDTH = 32;
 export let CELLHEIGHT = 32;
 
@@ -76,22 +76,22 @@ export class ScreenManager {
 		</main>);
 
 		// Load assets
-		if (!document.fonts.check(FONT)) {
+		/*if (!document.fonts.check(FONT)) {
 			for (let font of document.fonts.values()) {
 				if (font.family === FONTFACE) {
 					await font.load();
 				}
 			}
-			/*
+			/!*
 			await new Promise<void>((resolve)=>{
 				document.fonts.addEventListener("loadingdone", ()=>{
 					if (document.fonts.check(FONT)) resolve();
 				})
 			});
-			 */
-		}
+			 *!/
+		}*/
 
-		let glyphFont = await BitmapFontIBMBIOS;
+		let glyphFont = await BitmapFontIBMVGA8x16Ex;
 
 		// Setup canvas
 		document.addEventListener("resize", ()=>{

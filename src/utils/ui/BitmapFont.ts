@@ -5,6 +5,7 @@
 import {XY} from "../grid/geom";
 import {createCanvas} from "./canvas";
 import {getOrPut} from "../collections";
+import {IGlyphFont} from "./GlyphLayer";
 
 export interface BitmapFontDef {
 	charWidth: number;
@@ -15,7 +16,7 @@ export interface BitmapFontDef {
 	placeholderChar?: string;
 }
 
-export class BitmapFont {
+export class BitmapFont implements IGlyphFont {
 	static cacheSize = 8;
 
 	constructor(
@@ -38,6 +39,7 @@ export class BitmapFont {
 				this.cc2pos.set(cc, (rowno << 16) + colno);
 			}
 		});
+		this.chars = def.chars.join('');
 
 		this.tempCanvas     = createCanvas(this.charWidth, this.charHeight);
 		let placeholderCC   = def.placeholderChar?.charCodeAt(0) ?? '?'.charCodeAt(0);
@@ -46,6 +48,7 @@ export class BitmapFont {
 		this.cache = new Map();
 	}
 
+	readonly chars: string;
 	readonly charWidth: number;
 	readonly charHeight: number;
 	private readonly charsPerRow: number;
