@@ -19,6 +19,7 @@ import {EntityClassLoader} from "./ecs/EntityClassLoader";
 import {EntityJson, EntityLoader} from "./ecs/EntityLoader";
 import {Game} from "./Game";
 import {UsableLib} from "./data/UsableLib";
+import {XY} from "../utils/grid/geom";
 
 let logger = LogManager.loggerFor("GameState");
 
@@ -47,6 +48,10 @@ export class GameState extends AbstractRootGameState {
 	// 1 round = 4 ticks
 	@EntityData()
 	tickNo: number;
+
+	isVisible(xy:XY):boolean {
+		return this.level.contains(xy) && !!this.vismap[this.level.xy2i(xy.x,xy.y)];
+	}
 
 	saveChildren(): ChildGameObject[] {
 		return [

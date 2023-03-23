@@ -8,7 +8,7 @@ import {bresenline} from "./line";
 export interface LosProvider {
 	rect: XYRect;
 
-	visible(idx: number): boolean;
+	seeThrough(xy: XY): boolean;
 }
 
 /**
@@ -29,16 +29,37 @@ export function genVisibilityMap(
 	// TODO fog of war
 	if (clear) vismap.fill(0);
 	vismap[start.y * width + start.x] = 1;
+	let border = new Set<number>(); // farthest visible cells
 
 	input.rect.perimeterForEach(xy => {
 		let cast = bresenline(start.x, start.y, xy.x, xy.y);
 		for (let i = 1; i < cast.length; i++) {
-			let {x, y}  = cast[i];
-			let idx     = y * width + x;
+			let xy      = cast[i];
+			let idx     = xy.y * width + xy.x;
 			vismap[idx] = 1;
-			if (!input.visible(idx)) break;
+			if (!input.seeThrough(xy)) {
+				border.add(idx);
+				break;
+			}
 		}
 	});
+	// reveal solids that have a visible neighbouring floor cell
+	for (let bi of border) {
+		let x = bi % width, y = (bi - x) / width;
+		for (let nxy of XY.neighbours8({x,y})) {
+			let ni = nxy.y*width+nxy.x;
+			if (vismap[ni]) continue;
+			if (input.rect.includes(nxy) && !input.seeThrough(nxy)) {
+				for (let n2xy of XY.neighbours8(nxy)) {
+					let n2i = n2xy.y*width+n2xy.x;
+					if (input.rect.includes(n2xy) && input.seeThrough(n2xy) && vismap[n2i]) {
+						vismap[ni] = 1;
+						break;
+					}
+				}
+			}
+		}
+	}
 
 	return vismap;
 }
@@ -46,9 +67,8 @@ export function genVisibilityMap(
 export function checkLineOfSight(input: LosProvider,
                        xy1: XY,
                        xy2: XY): boolean {
-	let w = input.rect.iwidth;
 	for (let xy of bresenline(xy1.x,xy1.y,xy2.x,xy2.y)) {
-		if (!input.visible(w*xy.y+xy.x)) return false;
+		if (!input.seeThrough(xy)) return false;
 	}
 	return true;
 }

@@ -42,6 +42,7 @@ export class ScreenManager {
 	decalLayer: DecalLayer;
 	private sidebarNode: Element;
 	private sidebar: ISidebar = new DefaultSidebar();
+	hover: XY|null = null;
 
 	afterLoad() {
 		this.particleLayer.clear();
@@ -99,8 +100,7 @@ export class ScreenManager {
 			get width() { return Game.state.mapWidth },
 			get height() { return Game.state.mapHeight },
 			glyphAt(x: number, y: number){
-				let i = Game.state.level.xy2i(x,y);
-				if (!Game.state.vismap[i]) return null;
+				if (!Game.state.isVisible({x, y})) return null;
 				let cell = Game.state.level.cellAt({x,y});
 				if (cell.objects.length > 0) return {
 					ch: '',
@@ -161,6 +161,12 @@ export class ScreenManager {
 		this.particleLayer.particles.maxz = CELLHEIGHT*2;
 		this.particleLayer.res = 4;
 		this.mainCanvas.addLayer(this.particleLayer);
+		this.mainCanvas.element.addEventListener("mousemove",(event)=>{
+			let xy = this.mainCanvas.unproject({x:event.offsetX,y:event.offsetY});
+			xy.x = (xy.x/CELLWIDTH)|0;
+			xy.y = (xy.y/CELLHEIGHT)|0;
+			this.hover = xy;
+		});
 
 		// Render loop
 		let t0 = 0;

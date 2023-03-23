@@ -8,6 +8,7 @@ import Chars from "../../utils/ui/chars";
 import jsx from "texsaur";
 import {formatTag, itemNameSpan, richText} from "./utils";
 import {KeyCodes} from "../../utils/ui/KeyCodes";
+import {Cell} from "../core/Level";
 
 export class DefaultSidebar implements ISidebar {
 
@@ -66,10 +67,10 @@ export class DefaultSidebar implements ISidebar {
 	}
 
 	render(container: Element): void {
-		let player = Game.state.player;
+		let player = Game.state.player, level = Game.state.level;
 		container.append(`Seed ${Game.state.seed}\n`);
 		container.append(
-			<span class={Game.state.level.cleared?"text-blue":""}>Dungeon level {Game.state.depth}</span>);
+			<span class={level.cleared?"text-blue":""}>Dungeon level {Game.state.depth}</span>);
 		container.append(<br/>);
 		container.append(<br/>);
 		container.append(`Hero level ${player.level}\n`);
@@ -108,15 +109,22 @@ export class DefaultSidebar implements ISidebar {
 		}
 
 		container.append("\n");
+		let cell: Cell;
+		let hover = Game.screenManager.hover;
+		if (hover && Game.state.isVisible(hover)) {
+			cell = level.cellAt(hover);
+		} else {
+			cell = player.cell!;
+		}
 		container.append("You see:\n");
-		for (let object of player.cell!.objects) {
+		for (let object of cell.objects) {
 			if (object === player) continue;
 			container.append(" ");
 			container.append(...richText(formatTag(object)));
 			container.append("\n");
 		}
 		container.append(" ");
-		container.append(player.cell!.tile.name);
+		container.append(cell.tile.name);
 		container.append("\n");
 	}
 

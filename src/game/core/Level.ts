@@ -126,6 +126,7 @@ export class Level extends GameObject implements LosProvider {
 		return {x: (i % this.width), y: (i / this.width) | 0};
 	}
 
+	// TODO move to XYRect or Array2D
 	xy2i(x: number, y: number): number {
 		return y * this.width + x;
 	}
@@ -170,8 +171,8 @@ export class Level extends GameObject implements LosProvider {
 		return 0 <= xy.x && xy.x < this.width && 0 <= xy.y && xy.y < this.height;
 	}
 
-	visible(idx: number): boolean {
-		return this.cells[idx].tile.vision
+	seeThrough(xy: XY): boolean {
+		return this.cells[this.xy2i(xy.x,xy.y)].tile.vision
 	}
 
 	get cleared():boolean {

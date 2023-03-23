@@ -3,6 +3,8 @@
  */
 
 // TODO classes?
+import {Dir8List} from "./grid";
+
 export interface XY {
 	x: number;
 	y: number;
@@ -23,9 +25,15 @@ export namespace XY {
 	export function subtract(a:XY,b:XY):XY {
 		return {x:a.x-b.x,y:a.y-b.y};
 	}
-	export function adjacent(xy1:XY,xy2:XY):boolean {
+	export function adjacent8(xy1:XY, xy2:XY):boolean {
 		return Math.abs(xy1.x-xy2.x) <= 1 &&
 			Math.abs(xy1.y-xy2.y) <= 1;
+	}
+	export function neighbours8(xy:XY):XY[] {
+		return Dir8List.map(dir=>({
+			x:xy.x+dir.dx,
+			y:xy.y+dir.dy,
+		}));
 	}
 }
 

@@ -3,7 +3,6 @@ import jsx from "texsaur";
 import {createElement} from "../../utils/ui/dom";
 import {GameObject} from "../ecs/GameObject";
 import {Creature} from "../core/Creature";
-import {Corpse} from "../objects/Corpse";
 import {objectClassName} from "../../utils/types";
 
 export function itemNameSpan(item: Item | null | undefined): Node | string {
@@ -76,11 +75,8 @@ export function formatTag(obj:GameObject, key:string=""):string {
 			case "":
 				return `{rarity-${ItemRarity[obj.rarity].toLowerCase()};${obj.name}}`;
 		}
-	} else if (obj instanceof Corpse) {
-		switch (key) {
-			case "":
-				return obj.name;
-		}
+	} else if (key === "") {
+		return obj.name;
 	}
 	return `{error;Unknown tag ${objectClassName(obj)}.${key}}`
 }

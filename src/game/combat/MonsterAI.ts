@@ -65,7 +65,7 @@ export class MonsterAI extends ObjectComponent<Creature> {
 					this.execute();
 					return;
 				}
-				if (XY.adjacent(me.pos, target.pos)) {
+				if (XY.adjacent8(me.pos, target.pos)) {
 					gc.actMeleeAttack(me, target);
 					return;
 				}
