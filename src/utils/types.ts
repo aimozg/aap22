@@ -12,7 +12,8 @@ export type PartialRecord<K extends keyof any, T> =  Partial<Record<K, T>>
 
 export type ReadonlyRecord<K extends keyof any, T> = Readonly<Record<K, T>>
 
-export interface Type<T> extends Function { new (...args: any[]): T; }
+// export interface Type<T> extends Function { new (...args: any[]): T; }
+export type Type<T> = Function & { prototype: T; } | Function & { new (...args: any[]): T; }
 
 const PlainObjectPrototype = Object.getPrototypeOf({});
 export function isPlainObject(o:any):boolean {

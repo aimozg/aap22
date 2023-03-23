@@ -6,18 +6,14 @@ import {GlyphLayer, GlyphSource} from "../../utils/ui/GlyphLayer";
 import {removeChildren} from "../../utils/ui/dom";
 import {substitutePattern} from "../../utils/string";
 import {GameObject} from "../ecs/GameObject";
-import {Creature} from "../core/Creature";
-import {objectClassName} from "../../utils/types";
 import jsx from "texsaur";
 import {ParticleDef, ParticleLayer} from "../../utils/ui/ParticleLayer";
 import {XY} from "../../utils/grid/geom";
 import {DecalLayer} from "../../utils/ui/DecalLayer";
 import {ParticlePresetId, spawnParticle} from "./ParticlePresets";
-import {DroppedItem, Item, ItemRarity} from "../core/Item";
-import {Corpse} from "../objects/Corpse";
 import {Game} from "../Game";
 import {DefaultSidebar} from "./DefaultSidebar";
-import {richText} from "./utils";
+import {formatTag, richText} from "./utils";
 import BitmapFontIBMVGA8x16Ex from "../../../assets/ibmvga8x";
 
 // export let FONTFACE = "IBMBIOS";
@@ -241,11 +237,6 @@ export class ScreenManager {
 		let status = "";
 		if (!player.isAlive) {
 			status += "{red;GAME OVER}  "
-		} else {
-			let yousee = player.cell!.objects.filter(o => o !== player).map(mobj => this.formatTag(mobj, "")).join(", ");
-			if (yousee) {
-				status += `You see ${yousee}.`;
-			}
 		}
 		status += " FPS: ";
 		status += String(this.fps|0).padStart(2,' ');
@@ -253,33 +244,6 @@ export class ScreenManager {
 		return status;
 	}
 
-	formatTag(obj:GameObject, key:string):string {
-		if (obj instanceof Creature) {
-			switch (key) {
-				case "":
-					return `{1;${obj.name}}`
-				case "s":
-					// if plural return ""
-					return "s";
-				case "es":
-					// if plural return ""
-					return "es";
-			}
-		} else if (obj instanceof DroppedItem) {
-			return this.formatTag(obj.item, key);
-		} else if (obj instanceof Item) {
-			switch (key) {
-				case "":
-					return `{rarity-${ItemRarity[obj.rarity].toLowerCase()};${obj.name}}`;
-			}
-		} else if (obj instanceof Corpse) {
-			switch (key) {
-				case "":
-					return obj.name;
-			}
-		}
-		return `{error;Unknown tag ${objectClassName(obj)}.${key}}`
-	}
 	logsub(message: string, substitutions: Record<string, string | GameObject | number>|[string|GameObject|number]) {
 		message = substitutePattern(message, str=>{
 			if (str.includes(';')) return undefined;
@@ -288,7 +252,7 @@ export class ScreenManager {
 			let propname = parts[1] ?? "";
 			let object = (substitutions as any)[objname];
 			if (!object) return undefined;
-			if (object instanceof GameObject) return this.formatTag(object, propname);
+			if (object instanceof GameObject) return formatTag(object, propname);
 			if (typeof object === "number") {
 				// TODO use propname to format the number
 				return String(object);

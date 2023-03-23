@@ -361,7 +361,7 @@ export let GameController = new class {
 			: */"{a} {red;die{a.s}}. ";
 		this.log(str, {a:target, b:source!});
 		level.removeObject(target);
-		level.addObject(new Corpse("dead "+target.name, target.color), cell.xy);
+		cell.placeObject(new Corpse("dead "+target.name, target.color));
 		// TODO award XP
 		// TODO pool of blood
 		// TODO gibbing
@@ -370,16 +370,18 @@ export let GameController = new class {
 			this.doDropItem(item, cell.xy);
 		}
 	}
-	doDropItem(item:Item, xy:XY):XY {
-		// TODO drop loot on nearest cell
+	doDropItem(item:Item, xy:XY):XY|null {
 		let level = Game.state.level;
-		let cell = level.cellAt(xy);
-		if (cell.isEmpty) {
+		let cell = level.findNearestCell(xy,8,
+			(cell)=>!cell.objectOfType(DroppedItem),
+			(cell)=>cell.tile.walk
+			)
+		if (cell) {
 			let droppedItem = new DroppedItem(item);
-			level.addObject(droppedItem, cell.xy);
+			cell.placeObject(droppedItem);
 			return cell.xy;
 		}
-		return {x:0,y:0};
+		return null;
 	}
 
 	//-------//

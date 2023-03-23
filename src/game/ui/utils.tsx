@@ -1,6 +1,10 @@
-import {Item, ItemRarity} from "../core/Item";
+import {DroppedItem, Item, ItemRarity} from "../core/Item";
 import jsx from "texsaur";
 import {createElement} from "../../utils/ui/dom";
+import {GameObject} from "../ecs/GameObject";
+import {Creature} from "../core/Creature";
+import {Corpse} from "../objects/Corpse";
+import {objectClassName} from "../../utils/types";
 
 export function itemNameSpan(item: Item | null | undefined): Node | string {
 	if (!item) return "-";
@@ -51,4 +55,32 @@ export function richText(source: string): HTMLElement[] {
 	}
 	flush();
 	return result;
+}
+
+export function formatTag(obj:GameObject, key:string=""):string {
+	if (obj instanceof Creature) {
+		switch (key) {
+			case "":
+				return `{1;${obj.name}}`
+			case "s":
+				// if plural return ""
+				return "s";
+			case "es":
+				// if plural return ""
+				return "es";
+		}
+	} else if (obj instanceof DroppedItem) {
+		return formatTag(obj.item, key);
+	} else if (obj instanceof Item) {
+		switch (key) {
+			case "":
+				return `{rarity-${ItemRarity[obj.rarity].toLowerCase()};${obj.name}}`;
+		}
+	} else if (obj instanceof Corpse) {
+		switch (key) {
+			case "":
+				return obj.name;
+		}
+	}
+	return `{error;Unknown tag ${objectClassName(obj)}.${key}}`
 }

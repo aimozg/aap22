@@ -17,13 +17,13 @@ export interface IDir8 extends IDir {
 }
 
 export let Dir8: Readonly<Record<Dir8Id, IDir8>> = Object.freeze({
-	"UL": {id: "UL", dx: -1, dy: -1, opposite: "DR"},
 	"U": {id: "U", dx: 0, dy: -1, opposite: "D"},
-	"UR": {id: "UR", dx: +1, dy: -1, opposite: "DL"},
 	"L": {id: "L", dx: -1, dy: 0, opposite: "R"},
 	"R": {id: "R", dx: +1, dy: 0, opposite: "L"},
-	"DL": {id: "DL", dx: -1, dy: +1, opposite: "UR"},
 	"D": {id: "D", dx: 0, dy: +1, opposite: "U"},
+	"UL": {id: "UL", dx: -1, dy: -1, opposite: "DR"},
+	"UR": {id: "UR", dx: +1, dy: -1, opposite: "DL"},
+	"DL": {id: "DL", dx: -1, dy: +1, opposite: "UR"},
 	"DR": {id: "DR", dx: +1, dy: +1, opposite: "UL"},
 });
 
@@ -38,9 +38,9 @@ export interface IDir4 extends IDir {
 
 export let Dir4: Readonly<Record<Dir4Id, IDir4>> = Object.freeze({
 	"U": {id: "U", dx: -1, dy: -1, opposite: "D"},
-	"D": {id: "D", dx: 0, dy: +1, opposite: "U"},
 	"L": {id: "L", dx: -1, dy: 0, opposite: "R"},
 	"R": {id: "R", dx: +1, dy: 0, opposite: "L"},
+	"D": {id: "D", dx: 0, dy: +1, opposite: "U"},
 });
 
 export let Dir4List = Object.values(Dir4);

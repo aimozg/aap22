@@ -12,12 +12,13 @@ import {coerce} from "../../utils/math/utils";
 import {Random} from "../../utils/math/Random";
 import {GlyphData} from "../../utils/ui/GlyphLayer";
 import {Creature} from "./Creature";
-import {Dir8List, xyPlusDir} from "../../utils/grid/grid";
+import {Dir4List, Dir8List, xyPlusDir} from "../../utils/grid/grid";
 import {LosProvider} from "../../utils/grid/los";
 import {UUID} from "../ecs/utils";
 import {EntityClassLoader} from "../ecs/EntityClassLoader";
 import {EntityJson} from "../ecs/EntityLoader";
 import {EntityData} from "../ecs/decorators";
+import {Type} from "../../utils/types";
 
 export class Cell {
 	constructor(
@@ -33,6 +34,9 @@ export class Cell {
 
 	get objects(): MapObject[] {
 		return this.level.objectsAt(this.xy);
+	}
+	objectOfType<T extends MapObject>(klass:Type<T>):T|undefined {
+		return this.level.mobjAt(this.xy,klass);
 	}
 
 	get isEmpty(): boolean {
@@ -151,7 +155,11 @@ export class Level extends GameObject implements LosProvider {
 	}
 
 	creatureAt(xy: XY): Creature | undefined {
-		return this.objectsAt(xy).find((mobj): mobj is Creature => mobj instanceof Creature);
+		return this.mobjAt(xy,Creature);
+	}
+
+	mobjAt<T extends MapObject>(xy: XY, klass: Type<T>): T | undefined {
+		return this.objectsAt(xy).find((mobj): mobj is T => mobj instanceof klass);
 	}
 
 	isEmpty(xy: XY) {
@@ -218,6 +226,22 @@ export class Level extends GameObject implements LosProvider {
 		this.cellAt(xy).tile = tile;
 	}
 
+	neighbours4(xy:XY):XY[] {
+		let result:XY[] = [];
+		for (let dir of Dir4List) {
+			let nxy = xyPlusDir(xy, dir);
+			if (this.contains(nxy)) result.push(nxy);
+		}
+		return result;
+	}
+	neighbours8(xy:XY):XY[] {
+		let result:XY[] = [];
+		for (let dir of Dir8List) {
+			let nxy = xyPlusDir(xy, dir);
+			if (this.contains(nxy)) result.push(nxy);
+		}
+		return result;
+	}
 	/**
 	 * Number of neighbour cells of specific tile type
 	 */
@@ -266,6 +290,27 @@ export class Level extends GameObject implements LosProvider {
 			this.setTile({x, y: y1}, tile);
 			this.setTile({x, y: y2}, tile);
 		}
+	}
+
+	/**
+	 * Find cell nearest to start that satisfies conditions
+	 * @param start
+	 * @param ndir
+	 * @param condition
+	 * @param [passability] Return false to ignore a cell and its neighbours. By default all cells are passable.
+	 */
+	findNearestCell(start:XY,
+	                ndir:4|8,
+	                condition:(cell:Cell)=>boolean,
+	                passability?:(cell:Cell)=>boolean):Cell|undefined {
+		let queue = [start];
+		while(queue.length>0) {
+			let cell = this.cellAt(queue.shift()!);
+			if (passability && !passability(cell)) continue;
+			if (condition(cell)) return cell;
+			queue.push(...(ndir===4?this.neighbours4(cell.xy):this.neighbours8(cell.xy)));
+		}
+		return undefined;
 	}
 
 	static Loader:EntityClassLoader<Level> = {

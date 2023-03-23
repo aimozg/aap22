@@ -6,7 +6,7 @@ import {ISidebar} from "./ScreenManager";
 import {Game} from "../Game";
 import Chars from "../../utils/ui/chars";
 import jsx from "texsaur";
-import {itemNameSpan} from "./utils";
+import {formatTag, itemNameSpan, richText} from "./utils";
 import {KeyCodes} from "../../utils/ui/KeyCodes";
 
 export class DefaultSidebar implements ISidebar {
@@ -106,6 +106,18 @@ export class DefaultSidebar implements ISidebar {
 			container.append(itemNameSpan(item));
 			container.append("\n");
 		}
+
+		container.append("\n");
+		container.append("You see:\n");
+		for (let object of player.cell!.objects) {
+			if (object === player) continue;
+			container.append(" ");
+			container.append(...richText(formatTag(object)));
+			container.append("\n");
+		}
+		container.append(" ");
+		container.append(player.cell!.tile.name);
+		container.append("\n");
 	}
 
 }
