@@ -2,9 +2,9 @@
  * Created by aimozg on 17.07.2022.
  */
 export class Deferred<T> extends Promise<T> {
-	constructor(executor?: (resolve: (value: T | PromiseLike<T>) => void, reject?: (reason?: any) => void) => void) {
+	constructor(executor?: (resolve: (value: T | PromiseLike<T>) => void, reject?: (reason?: unknown) => void) => void) {
 		let resolveFn:(value:T|PromiseLike<T>)=>void,
-			rejectFn:(reason?:any)=>void;
+			rejectFn:(reason?:unknown)=>void;
 		let status = { resolved: false, rejected: false };
 		super((resolve,reject)=>{
 			resolveFn = t => {
@@ -26,7 +26,7 @@ export class Deferred<T> extends Promise<T> {
 	get rejected() { return this.status.rejected }
 	get completed() { return this.status.resolved || this.status.rejected }
 	readonly resolve:(value:T|PromiseLike<T>)=>void;
-	readonly reject:(reason?:any)=>void;
+	readonly reject:(reason?:unknown)=>void;
 	tryResolve(value:T|PromiseLike<T>) {
 		if (!this.completed) this.resolve(value)
 	}

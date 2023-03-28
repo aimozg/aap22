@@ -40,7 +40,7 @@ function flipv(layout:string[]):string[] {
 	}
 	return result;
 }
-function equals(a:any,b:any):boolean {
+function equals(a:unknown,b:unknown):boolean {
 	if (a === b) return true;
 	if (typeof a !== typeof b) return false;
 	if (typeof a !== 'object') return a === b;
@@ -56,7 +56,7 @@ function equals(a:any,b:any):boolean {
 	if ('equals' in a && typeof a.equals === 'function') {
 		return a.equals(b);
 	}
-	return equals(Object.entries(a),Object.entries(b));
+	return equals(Object.entries(a),Object.entries(b as object));
 }
 export function layoutSymmetricalVariants(layout:string[]):string[][] {
 	let r90 = rotate90(layout);

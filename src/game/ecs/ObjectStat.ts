@@ -40,7 +40,7 @@ export class ObjectStat {
 	) {
 		this._current = base;
 	}
-	effects?: Effect<any>[]
+	effects?: Effect<GameObject>[]
 	private _current: number;
 	private _dirty: boolean = false;
 	get current():number {
@@ -70,11 +70,11 @@ export class ObjectStat {
 			this.host.dispatchEvent(`onStatChange_${this.id}`, event);
 		}
 	}
-	addEffect(e:Effect<any>, runHooks:boolean=true) {
+	addEffect(e:Effect<GameObject>, runHooks:boolean=true) {
 		(this.effects ??= []).push(e);
 		this.update(runHooks)
 	}
-	removeEffect(e:Effect<any>, runHooks:boolean=true) {
+	removeEffect(e:Effect<GameObject>, runHooks:boolean=true) {
 		this.effects?.remove(e);
 		this.update(runHooks);
 	}

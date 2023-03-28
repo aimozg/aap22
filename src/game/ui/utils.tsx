@@ -21,7 +21,7 @@ export function richText(source: string): HTMLElement[] {
 
 	function flush() {
 		if (chunk.length > 0) {
-			let props: Record<string, any> = {};
+			let props: Record<string, string> = {};
 			if (cls) {
 				if (cls[0] === '#') {
 					props.style = "color: " + cls;

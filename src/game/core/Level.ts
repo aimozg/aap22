@@ -80,6 +80,12 @@ export class Room extends XYRect {
 	}
 }
 
+export interface LevelCustomData {
+	width: number;
+	height: number;
+	tiles: number[];
+}
+
 export class Level extends GameObject implements LosProvider {
 	static readonly CLSID = "Level";
 
@@ -111,13 +117,13 @@ export class Level extends GameObject implements LosProvider {
 		}
 	}
 
-	loadCustomData(data: Record<string, any>): void {
-		(data.tiles as number[]).forEach((tile,i)=>{
+	loadCustomData(data: LevelCustomData): void {
+		data.tiles .forEach((tile,i)=>{
 			this.cells[i].tile = Tiles.byId(tile);
 		})
 	}
 
-	saveCustomData(data: Record<string, any>): void {
+	saveCustomData(data: LevelCustomData): void {
 		data.tiles = this.cells.map(cell=>cell.tile.id);
 	}
 
@@ -317,7 +323,8 @@ export class Level extends GameObject implements LosProvider {
 	static Loader:EntityClassLoader<Level> = {
 		clsid: Level.CLSID,
 		create(e: EntityJson): Level {
-			return new Level(e.data!["width"], e.data!["height"], e.uuid);
+			let data = e.data as LevelCustomData;
+			return new Level(data.width, data.height, e.uuid);
 		}
 	}
 }

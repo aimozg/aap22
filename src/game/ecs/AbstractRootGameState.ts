@@ -7,6 +7,11 @@ import {EntityLoader} from "./EntityLoader";
 import {XorWowRandom} from "../../utils/math/XorWowRandom";
 import {EntityData} from "./decorators";
 
+export interface AbstractRootGameStateCustomData {
+	uuidCounter: number;
+	rng: object;
+}
+
 export abstract class AbstractRootGameState extends GameObject {
 	static randomSeed():number {
 		return (Math.random()*1_000_000_000)|0
@@ -26,12 +31,12 @@ export abstract class AbstractRootGameState extends GameObject {
 
 	resetGame() {}
 
-	saveCustomData(data: Record<string, any>) {
+	saveCustomData(data: AbstractRootGameStateCustomData) {
 		data.uuidCounter = UUID.counter;
 		data.rng = this.rng.saveState();
 	}
 
-	loadCustomData(data: Record<string, any>, ctx: EntityLoader) {
+	loadCustomData(data: AbstractRootGameStateCustomData, ctx: EntityLoader) {
 		let uuid = data.uuidCounter;
 		ctx.requireType(uuid, "number", "uuid");
 		UUID.counter = uuid as number;

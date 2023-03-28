@@ -4,7 +4,7 @@
 import {Logger, LogLevel} from "./Logger";
 
 export class NopLogger extends Logger {
-	doLog(level: LogLevel, message: string, ...rest: any[]): void {
+	doLog(level: LogLevel, message: string, ...rest: unknown[]): void {
 	}
 
 	constructor() {

@@ -138,7 +138,7 @@ export class  XYRect {
 	 * Iterate coordinates topleft->topright->bottomright->bottomleft
 	 * @param callback Return exactly `false` to stop iteration
 	 */
-	perimeterForEach(callback:(cell:XY)=>any): void {
+	perimeterForEach(callback:(cell:XY)=>unknown): void {
 		let {x1,y1,x2,y2} = this;
 		for (let x = x1; x <= x2; x++) if (callback({x,y:y1}) === false) return;
 		for (let y = y1+1; y <= y2; y++) if (callback({x:x2,y}) === false) return;

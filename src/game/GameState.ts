@@ -11,7 +11,7 @@ import {LogManager} from "../utils/logging/LogManager";
 import {Tiles} from "./core/Tile";
 import {WeaponLib} from "./data/WeaponLib";
 import {Item} from "./core/Item";
-import {AbstractRootGameState} from "./ecs/AbstractRootGameState";
+import {AbstractRootGameState, AbstractRootGameStateCustomData} from "./ecs/AbstractRootGameState";
 import {EntityData, EntityReference} from "./ecs/decorators";
 import {ChildGameObject, GameObject} from "./ecs/GameObject";
 import {UUID} from "./ecs/utils";
@@ -22,6 +22,10 @@ import {UsableLib} from "./data/UsableLib";
 import {XY} from "../utils/grid/geom";
 
 let logger = LogManager.loggerFor("GameState");
+
+export interface GameStateCustomData extends AbstractRootGameStateCustomData {
+	maprng: object;
+}
 
 export class GameState extends AbstractRootGameState {
 	static CLSID = "GameState"
@@ -59,7 +63,7 @@ export class GameState extends AbstractRootGameState {
 		];
 	}
 
-	loadChild(pos: any, child: GameObject) {
+	loadChild(pos: unknown, child: GameObject) {
 		if (pos === "level" && child instanceof Level) {
 			this.level = child;
 			return;
@@ -81,12 +85,12 @@ export class GameState extends AbstractRootGameState {
 	get mapHeight() { return this.level.height }
 
 
-	saveCustomData(data: Record<string, any>) {
+	saveCustomData(data: GameStateCustomData) {
 		super.saveCustomData(data);
 		data.maprng = this.maprng.saveState();
 	}
 
-	loadCustomData(data: Record<string, any>, ctx: EntityLoader) {
+	loadCustomData(data: GameStateCustomData, ctx: EntityLoader) {
 		super.loadCustomData(data, ctx);
 		this.maprng.loadState(data.maprng);
 	}

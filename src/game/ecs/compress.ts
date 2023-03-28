@@ -12,7 +12,6 @@ interface Visitor {
 	uint32(value:number):void;
 	float64(value:number):void;
 	string(value:string):void;
-	[index:string]:any;
 }
 
 function visitInteger(value:number, visitor:Visitor) {
@@ -90,7 +89,7 @@ function visitAny(value:any, visitor:Visitor) {
 		visitMapOfAny(value, visitor);
 	}
 }
-function visitMapOfAny(value:any, visitor:Visitor) {
+function visitMapOfAny(value:object, visitor:Visitor) {
 	visitArray(Object.entries(value), visitor, ([k,v])=>{
 		visitor.string(k);
 		visitAny(v,visitor);
@@ -211,7 +210,7 @@ function readString(bb:ByteBuffer, strings:Map<number,string>):string {
 	if (s === undefined) throw new Error(`Unknown String#${n}`);
 	return s;
 }
-function readAny(bb:ByteBuffer, strings:Map<number,string>):any {
+function readAny(bb:ByteBuffer, strings:Map<number,string>):unknown {
 	let type = bb.readUint8();
 	switch (type) {
 		case 0: return undefined;
@@ -228,8 +227,8 @@ function readAny(bb:ByteBuffer, strings:Map<number,string>):any {
 			throw new Error(`Bad BinaryAny type ${type}`)
 	}
 }
-function readMapOfAnyOrNull(bb:ByteBuffer, strings:Map<number,string>):any {
-	let out:any = {};
+function readMapOfAnyOrNull(bb:ByteBuffer, strings:Map<number,string>):null|Record<string,unknown> {
+	let out:Record<string,unknown> = {};
 	let empty = true;
 	iterArray(bb, (bb)=>{
 		empty = false;
@@ -249,7 +248,7 @@ function readEntity(bb:ByteBuffer,strings:Map<number,string>):EntityJson {
 	let children = readArray(bb, bb=>{
 		let pos = readAny(bb,strings);
 		let child = readEntity(bb,strings);
-		return [pos,child] as [any,EntityJson]
+		return [pos,child] as [unknown,EntityJson]
 	});
 	let data = readMapOfAnyOrNull(bb, strings);
 

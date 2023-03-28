@@ -7,6 +7,13 @@ export interface EntityClassLoader<ENTITY extends Entity> {
 	create(e: EntityJson, ctx: EntityLoader): ENTITY;
 }
 
+export class SimpleClassLoader<ENTITY extends Entity> implements EntityClassLoader<ENTITY> {
+	constructor(
+		public readonly clsid: string,
+		public create: (e:EntityJson, ctx: EntityLoader)=>ENTITY
+	) {}
+}
+
 export abstract class BlueprintClassLoader<ENTITY extends Entity, BLUEPRINT extends {bpid:string}> implements EntityClassLoader<ENTITY>{
 	protected constructor(public clsid: string) {}
 	protected blueprints = new Map<string, BLUEPRINT>();

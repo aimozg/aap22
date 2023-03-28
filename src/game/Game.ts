@@ -29,11 +29,11 @@ export namespace Game {
 	export const gameController = GameController;
 	export const entityLoader = new EntityLoader();
 
-	export function getSaveData():any {
+	export function getSaveData():ArrayBuffer {
 		return entityLoader.save(state);
 	}
-	export function loadSaveData(data:any) {
-		entityLoader.deserializeRoot(data);
+	export function loadSaveData(data:ArrayBuffer) {
+		entityLoader.load(data);
 		screenManager.afterLoad();
 	}
 

@@ -11,9 +11,9 @@ import {ObjectStat, StatId} from "./ObjectStat";
 import {getOrPut} from "../../utils/collections";
 import {BaseStats, initStatBaseValuesFromMetadata} from "./decorators";
 
-export type ChildGameObject = [any, GameObject];
+export type ChildGameObject = [unknown, GameObject];
 
-@BaseStats({hp:0})
+@BaseStats({hp: 0})
 export abstract class GameObject extends Entity {
 	protected constructor(
 		clsid: string,
@@ -24,12 +24,12 @@ export abstract class GameObject extends Entity {
 		initStatBaseValuesFromMetadata(this);
 	}
 
-	name: string                                 = "GameObject";
-	parentEntity: GameObject | null              = null;
-	effects: Effect<this>[]                      = [];
-	components: ObjectComponent<this>[]          = [];
+	name: string                                   = "GameObject";
+	parentEntity: GameObject | null                = null;
+	effects: Effect<GameObject>[]                  = [];
+	components: ObjectComponent<GameObject>[]      = [];
 	hookLists: Map<GameEventType, Entity[]> | null = null;
-	stats: Map<StatId, ObjectStat>               = new Map();
+	stats: Map<StatId, ObjectStat>                 = new Map();
 
 	toString() {
 		return `[${this.clsid}#${this.uuid}]`
@@ -40,7 +40,7 @@ export abstract class GameObject extends Entity {
 		return []
 	};
 
-	loadChild(pos: any, child: GameObject): void {
+	loadChild(pos: unknown, child: GameObject): void {
 		throw new Error(`Object ${this} cannot have child [${objectToString(pos)}, ${child}]`);
 	}
 
@@ -69,16 +69,16 @@ export abstract class GameObject extends Entity {
 			getOrPut(
 				(this.hookLists ??= new Map()),
 				type,
-				()=>[]
+				() => []
 			).push(component);
 		});
 	}
 
-	findComponent<T extends ObjectComponent<this>>(klass: Type<T>): T | undefined {
+	findComponent<T extends ObjectComponent<GameObject>>(klass: Type<T>): T | undefined {
 		return this.components.find((c): c is T => c instanceof klass);
 	}
 
-	addEffect(effect: Effect<this>, runHooks:boolean=true): void {
+	addEffect(effect: Effect<this>, runHooks: boolean = true): void {
 		if (effect.parentEntity) throw new Error(`Effect ${effect} already attached to ${effect.parentEntity}`);
 		effect.parentEntity = this;
 		this.effects.push(effect);
@@ -90,7 +90,7 @@ export abstract class GameObject extends Entity {
 			getOrPut(
 				(this.hookLists ??= new Map()),
 				type,
-				()=>[]
+				() => []
 			).push(effect);
 		});
 		// TODO attach hooks
@@ -99,7 +99,7 @@ export abstract class GameObject extends Entity {
 	removeEffect(effect: Effect<this>): boolean {
 		if (this.effects.remove(effect)) {
 			effect.parentEntity = null;
-			effect.stats?.forEach((value,stat)=>{
+			effect.stats?.forEach((value, stat) => {
 				this.getStatObject(stat).removeEffect(effect);
 			});
 			if (effect.hooks) Object.keys(effect.hooks).forEach(type => {
@@ -113,12 +113,12 @@ export abstract class GameObject extends Entity {
 
 	dispatchEvent<T extends GameEventType>(type: T, event: GameEventMap[T]) {
 		super.dispatchEvent(type, event);
-		for (let hl of this.hookLists?.get(type)??[]) {
+		for (let hl of this.hookLists?.get(type) ?? []) {
 			hl.dispatchEvent(type, event);
 		}
 	}
 
-	registerOwnHook<T extends GameEventType>(type: T, handler: GameEventHandlers[T]){
+	registerOwnHook<T extends GameEventType>(type: T, handler: GameEventHandlers[T]) {
 		(this.hooks ??= {})[type] = handler;
 	}
 

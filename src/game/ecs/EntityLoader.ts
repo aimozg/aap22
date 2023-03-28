@@ -10,7 +10,7 @@ import {compressEntityJson, decompressEntityJson} from "./compress";
 
 export class EntityLoaderError extends Error {
 	constructor(context: EntityLoader, message: string, cause?: Error) {
-		super(`Error loading ${context.context}: ${message}`,
+		super(`Error loading ${context.contextPath}: ${message}`,
 			cause ? {cause: cause} : undefined);
 		if (cause) {
 			this.stack += `\nCaused by ${cause.stack}`;
@@ -27,21 +27,29 @@ export interface EntityJson {
 	stats?: StatValues;
 	components?: EntityJson[];
 	effects?: EntityJson[];
-	children?: [any, EntityJson][];
+	children?: [unknown, EntityJson][];
 }
 
 export class EntityLoader {
 
-	get context(): string {
+	get contextPath(): string {
 		return this.path.join('.');
 	}
 
-	private classLoaders = new Map<string, EntityClassLoader<any>>()
+	private classLoaders = new Map<string, EntityClassLoader<Entity>>()
 
-	registerClassLoader(c: EntityClassLoader<any>) {
+	registerClassLoader(c: EntityClassLoader<Entity>) {
 		this.classLoaders.set(c.clsid, c);
 	}
 
+	findContext(clsid:string):EntityJson|undefined {
+		for (let i = this.context.length-1; i>=0; i--) {
+			if (this.context[i].clsid === clsid) return this.context[i];
+		}
+		return undefined;
+	}
+
+	context: EntityJson[]          = [];
 	private path: string[]         = [];
 	private references: {
 		target: Entity,
@@ -59,30 +67,37 @@ export class EntityLoader {
 		this.entitiesWithReferences.clear();
 	}
 
-	private enter(key: string) {
+	private enter(key: string, ej?: EntityJson) {
 		this.path.push(key);
+	}
+	private enterEJ(ej:EntityJson) {
+		this.context.push(ej);
 	}
 
 	private exit(key: string) {
 		let x = this.path.pop();
-		if (x !== key) throw new Error(`Inconsistent EntityLoader stack: ${this.context}.${x}, expected ${key}`);
+		if (x !== key) throw new Error(`Inconsistent EntityLoader stack: ${this.contextPath}.${x}, expected ${key}`);
+	}
+	private exitEJ(ej:EntityJson) {
+		let x = this.context.pop();
+		if (x !== ej) throw new Error(`Inconsistent EntityLoader context stack at ${this.contextPath}: ${x?.clsid}#${x?.uuid}, expected ${ej.clsid}#${ej.uuid}`);
 	}
 
-	serializeValue(x: any): any {
+	serializeValue(x: unknown): unknown {
 		if (typeof x === "symbol" || typeof x === "bigint" || typeof x === "function") {
 			this.error(`Cannot serialize ${typeof x}`);
 		}
 		if (x === null || typeof x !== "object") return x;
 		if (x instanceof Set) return [...x];
 		if (x instanceof Map) {
-			let result: any = {};
+			let result: Record<string, unknown> = {};
 			x.forEach((v, k) => result[k] = this.serializeValue(v));
 			return result;
 		}
 		if (Array.isArray(x)) {
 			return x.map(xi => this.serializeValue(xi));
 		}
-		let result: any = {};
+		let result: Record<string, unknown> = {};
 		for (let [k, v] of Object.entries(x)) {
 			result[k] = this.serializeValue(v);
 		}
@@ -96,10 +111,11 @@ export class EntityLoader {
 		return output;
 	}
 
-	save(root:Entity):ArrayBuffer {
+	save(root: Entity): ArrayBuffer {
 		return compressEntityJson(this.serializeRoot(root));
 	}
-	load(input:ArrayBuffer):any {
+
+	load(input: ArrayBuffer): Entity {
 		return this.deserializeRoot(decompressEntityJson(input));
 	}
 
@@ -114,6 +130,7 @@ export class EntityLoader {
 			clsid: entity.clsid,
 			uuid: entity.uuid
 		}
+		this.enterEJ(out);
 		if (entity.bpid) out.bpid = entity.bpid;
 		let datas = getEntityDataDescriptors(entity);
 		if (datas.length > 0 || entity.saveCustomData) {
@@ -132,10 +149,11 @@ export class EntityLoader {
 			this.writeEffectData(entity, out);
 		} else this.error(`Cannot serialize ${objectClassName(entity)}`);
 		if (key) this.exit(key);
+		this.exitEJ(out);
 		return out;
 	}
 
-	private serializeDataField(value: any, descriptor: EntityDataDescriptor): any {
+	private serializeDataField(value: unknown, descriptor: EntityDataDescriptor): any {
 		switch (descriptor.type) {
 			case "clone":
 				return this.serializeValue(value);
@@ -170,7 +188,7 @@ export class EntityLoader {
 		}
 	}
 
-	private writeEffectData(eff: Effect<any>, out: EntityJson) {
+	private writeEffectData(eff: Effect<GameObject>, out: EntityJson) {
 		if (eff.stats && eff.stats.size > 0) {
 			out.stats = {};
 			eff.stats.forEach((value, key) => {
@@ -202,6 +220,7 @@ export class EntityLoader {
 	deserializeEntity(input: EntityJson, key?: string): Entity {
 		if (key) this.enter(key);
 		this.requireType(input, "object");
+		this.enterEJ(input);
 		let clsid = input.clsid;
 		let bpid  = input.bpid;
 		let uuid  = input.uuid;
@@ -219,6 +238,26 @@ export class EntityLoader {
 		} catch (e) {
 			this.error(e);
 		}
+		this.deserializeEntityData(entity, input);
+		if (entity instanceof GameObject) {
+			this.deserializeObjectFields(entity, input);
+		} else if (entity instanceof Effect) {
+			this.deserializeEffectFields(entity, input);
+		} else this.error(`Cannot deserialize ${objectClassName(entity)}`);
+		if (entity.afterLoad && !this.entitiesWithReferences.has(entity)) {
+			try {
+				entity.afterLoad(this);
+			} catch (e) {
+				this.error(e);
+			}
+		}
+		this.entities.set(uuid, entity);
+		if (key) this.exit(key);
+		this.exitEJ(input);
+		return entity;
+	}
+
+	deserializeEntityData(entity: Entity, input: EntityJson) {
 		if (input.data) {
 			this.enter("data");
 			this.requireType(input.data, "object");
@@ -230,7 +269,7 @@ export class EntityLoader {
 			let descriptors = getEntityDataDescriptors(entity);
 			for (let descriptor of descriptors) {
 				this.enter(descriptor.field);
-				let value: any = input.data[descriptor.name];
+				let value: unknown = input.data[descriptor.name];
 				switch (descriptor.type) {
 					case "clone":
 						this.deserializeValue(entity, descriptor.field, value);
@@ -248,21 +287,6 @@ export class EntityLoader {
 			}
 			this.exit("data")
 		}
-		if (entity instanceof GameObject) {
-			this.deserializeObjectFields(entity, input);
-		} else if (entity instanceof Effect) {
-			this.deserializeEffectFields(entity, input);
-		} else this.error(`Cannot deserialize ${objectClassName(entity)}`);
-		if (entity.afterLoad && !this.entitiesWithReferences.has(entity)) {
-			try {
-				entity.afterLoad(this);
-			} catch (e) {
-				this.error(e);
-			}
-		}
-		this.entities.set(uuid, entity);
-		if (key) this.exit(key);
-		return entity;
 	}
 
 	deserializeReference(target: Entity, field: string, uuid: number) {
@@ -271,27 +295,27 @@ export class EntityLoader {
 			target,
 			field,
 			uuid,
-			context: this.context
+			context: this.contextPath
 		})
 	}
 
-	deserializeValue(entity: Entity, key: string, value: any) {
+	deserializeValue(entity: Entity, key: string, value: unknown) {
 		// TODO either support nested complex values, or throw error on their serialization attempts.
 		let oldValue = (entity as any)[key];
 		if (oldValue instanceof Set) {
 			oldValue.clear();
-			for (let x of value) {
+			for (let x of (value as unknown[])) {
 				oldValue.add(x);
 			}
 		} else if (oldValue instanceof Map) {
 			oldValue.clear();
-			for (let [k, v] of Object.entries(value)) {
+			for (let [k, v] of Object.entries(value as Record<string, unknown>)) {
 				oldValue.set(k, v);
 			}
 		} else (entity as any)[key] = structuredClone(value);
 	}
 
-	private deserializeEffectFields(effect: Effect<any>, input: EntityJson) {
+	private deserializeEffectFields(effect: Effect<GameObject>, input: EntityJson) {
 		if (input.stats) {
 			this.enter("stats");
 			this.requireType(input.stats, "object");
@@ -310,11 +334,21 @@ export class EntityLoader {
 			this.requireType(input.components, "array");
 			for (let i = 0; i < input.components.length; i++) {
 				this.enter(String(i));
-				let component = this.deserializeEntity(input.components[i]);
-				if (!(component instanceof ObjectComponent)) {
-					this.error(`Expected ObjectComponent, got ${component.clsid}`);
+				let clsid = input.components[i].clsid;
+				let existingComponent = object.components.find(c=>c.clsid===clsid);
+				if (existingComponent) {
+					// TODO changing UUID is a hack - maybe loader should be responsible to create components with proper UUIDs?
+					(existingComponent as any).uuid = input.components[i].uuid;
+					this.deserializeEntityData(existingComponent, input.components[i]);
+					this.deserializeObjectFields(existingComponent, input.components[i]);
+					this.entities.set(existingComponent.uuid, existingComponent);
+				} else {
+					let component = this.deserializeEntity(input.components[i]);
+					if (!(component instanceof ObjectComponent)) {
+						this.error(`Expected ObjectComponent, got ${component.clsid}`);
+					}
+					component.addTo(object);
 				}
-				component.addTo(object);
 				this.exit(String(i));
 			}
 			this.exit("components")
@@ -370,7 +404,7 @@ export class EntityLoader {
 		}
 	}
 
-	requireType(value: any, type: string, key?: string) {
+	requireType(value: unknown, type: string, key?: string) {
 		if (type === "array") {
 			if (!Array.isArray(value)) {
 				if (key) this.enter(key);
@@ -384,7 +418,7 @@ export class EntityLoader {
 		}
 	}
 
-	error(e: any): never {
+	error(e: unknown): never {
 		if (e instanceof Error) throw new EntityLoaderError(this, e.message, e);
 		throw new EntityLoaderError(this, objectToString(e));
 	}

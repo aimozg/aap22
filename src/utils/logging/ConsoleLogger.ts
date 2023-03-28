@@ -49,7 +49,7 @@ export class ConsoleLogger extends Logger {
 	}
 	private readonly tag:string;
 
-	doLog(level: LogLevel, message: string, ...rest: any[]): void {
+	doLog(level: LogLevel, message: string, ...rest: unknown[]): void {
 		[message,rest] = Logger.formatMessage(message, ...rest);
 		const dt = ((new Date().getTime()-t0)/1000).toFixed(3).padStart(7, ' ');
 		switch (level) {

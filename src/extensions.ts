@@ -62,7 +62,7 @@ declare global {
 		minOn<K extends keyof T>(propName: K): T|undefined;
 		maxOn<K extends keyof T>(propName: K): T|undefined;
 
-		count(predicate: (item: T, index: number, array: T[]) => boolean, thisArg?: any): number;
+		count(predicate: (item: T, index: number, array: T[]) => boolean, thisArg?: object): number;
 
 		joinToString(separator: string): string;
 		joinToString(separator: string, lastSeparator: string): string;
@@ -242,7 +242,7 @@ function initExtensions() {
 		enumerable: false,
 		writable: false,
 		configurable: false,
-		value: function <T>(this: T[], predicate: (item: T, index: number, array: T[]) => boolean, thisArg?: any): number {
+		value: function <T>(this: T[], predicate: (item: T, index: number, array: T[]) => boolean, thisArg?: object): number {
 			let n = 0;
 			this.forEach((value, index) => {
 				if (predicate.call(thisArg, value, index, this)) n++;

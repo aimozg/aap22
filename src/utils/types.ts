@@ -5,36 +5,36 @@
 import "reflect-metadata"
 
 export type KeysOfType<OBJ, TYPE> = keyof {
-	[P in keyof OBJ as OBJ[P] extends TYPE? P: never]: any
+	[P in keyof OBJ as OBJ[P] extends TYPE? P: never]: unknown
 }
 
-export type PartialRecord<K extends keyof any, T> =  Partial<Record<K, T>>
+export type PartialRecord<K extends keyof unknown, T> =  Partial<Record<K, T>>
 
-export type ReadonlyRecord<K extends keyof any, T> = Readonly<Record<K, T>>
+export type ReadonlyRecord<K extends keyof unknown, T> = Readonly<Record<K, T>>
 
-// export interface Type<T> extends Function { new (...args: any[]): T; }
-export type Type<T> = Function & { prototype: T; } | Function & { new (...args: any[]): T; }
+// export interface Type<T> extends Function { new (...args: unknown[]): T; }
+export type Type<T> = Function & { prototype: T; } | Function & { new (...args: unknown[]): T; }
 
 const PlainObjectPrototype = Object.getPrototypeOf({});
-export function isPlainObject(o:any):boolean {
+export function isPlainObject(o:unknown):boolean {
 	return o !== null && typeof o === "object" && Object.getPrototypeOf(o) === PlainObjectPrototype;
 }
 
-export function objectClassName(o:any) {
+export function objectClassName(o:unknown) {
 	if (typeof o === "object" && o) {
 		return Object.getPrototypeOf(o).constructor.name
 	}
 	return typeof o
 }
 
-export function getMetadataOrPut<T>(metadataKey:any, target:Object, defaultMetadataProvider:(target:Object)=>T):T {
+export function getMetadataOrPut<T>(metadataKey:unknown, target:Object, defaultMetadataProvider:(target:Object)=>T):T {
 	if (Reflect.hasMetadata(metadataKey, target)) return Reflect.getMetadata(metadataKey, target);
 	let value = defaultMetadataProvider(target);
 	Reflect.defineMetadata(metadataKey, value, target);
 	return value;
 }
 
-export function getOwnMetadataOrPut<T>(metadataKey:any, target:Object, defaultMetadataProvider:(target:Object)=>T, propertyKey?: string|symbol):T {
+export function getOwnMetadataOrPut<T>(metadataKey:unknown, target:Object, defaultMetadataProvider:(target:Object)=>T, propertyKey?: string|symbol):T {
 	if (propertyKey !== undefined) {
 		if (Reflect.hasOwnMetadata(metadataKey, target, propertyKey)) return Reflect.getOwnMetadata(metadataKey, target, propertyKey);
 	} else {
@@ -49,7 +49,7 @@ export function getOwnMetadataOrPut<T>(metadataKey:any, target:Object, defaultMe
 	return value;
 }
 
-export function objectToString(x:any):string {
+export function objectToString(x:unknown):string {
 	let s = String(x);
 	if (s === "[object Object]") {
 		try { s = JSON.stringify(x) } catch (ignored){}

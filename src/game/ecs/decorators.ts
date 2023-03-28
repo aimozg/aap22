@@ -8,12 +8,13 @@ import {GameObject} from "./GameObject";
 import {StatId, StatValues} from "./ObjectStat";
 import {Entity} from "./Entity";
 import {initStatBaseValues} from "./utils";
+import {collectMetadata} from "../../utils/reflect";
 
 export function RawStat(statId?: StatId): PropertyDecorator {
 	return (target: Object, propertyKey: StatId) => {
 		statId ??= propertyKey;
 		Object.defineProperty(target, statId, {
-			get(this: GameObject): any {
+			get(this: GameObject): number {
 				return this.getStatBaseValue(statId!);
 			},
 			set(this: GameObject, v: number) {
@@ -26,7 +27,7 @@ export function BuffableStat(statId?: StatId): PropertyDecorator {
 	return (target: Object, propertyKey: StatId) => {
 		statId ??= propertyKey;
 		Object.defineProperty(target, statId, {
-			get(this: GameObject): any {
+			get(this: GameObject): number {
 				return this.getStatValue(statId!);
 			},
 			set() {
@@ -91,6 +92,6 @@ export function EntityReference(serializedName?:string): PropertyDecorator {
 }
 
 export function getEntityDataDescriptors(entity:Entity):EntityDataDescriptor[] {
-	return Reflect.getOwnMetadata(MetadataKeyEntityData, entity) ?? []
+	return collectMetadata(entity, MetadataKeyEntityData);
 }
 

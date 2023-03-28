@@ -10,6 +10,7 @@ import {Creature} from "./Creature";
 import {UUID} from "../ecs/utils";
 import {BlueprintClassLoader} from "../ecs/EntityClassLoader";
 import {EntityJson, EntityLoader} from "../ecs/EntityLoader";
+import {ObjectComponent} from "../ecs/ObjectComponent";
 
 export enum ItemRarity {
 	NORMAL,
@@ -49,30 +50,36 @@ export interface ItemBlueprint {
 	usable?: UsableDef;
 }
 
-export class WeaponComponent {
-	constructor(public item:Item, def:WeaponDef) {
+export class WeaponComponent extends ObjectComponent<Item> {
+	static CLSID = "WeaponComponent"
+	constructor(def:WeaponDef, uuid:number = UUID()) {
+		super(WeaponComponent.CLSID, null, uuid);
 		this.damage = def.damage;
 	}
 	damage: number;
 }
-export class ArmorComponent {
-	constructor(public item:Item, def:ArmorDef) {
+export class ArmorComponent extends ObjectComponent<Item>{
+	static CLSID = "ArmorComponent"
+	constructor(def:ArmorDef, uuid:number = UUID()) {
+		super(ArmorComponent.CLSID, null, uuid);
 		this.defense = def.defense;
 	}
 	defense: number;
 }
-export class UsableComponent {
-	constructor(public item:Item, def: UsableDef) {
+export class UsableComponent extends ObjectComponent<Item>{
+	static CLSID = "UsableComponent"
+	constructor(def: UsableDef, uuid:number = UUID()) {
+		super(UsableComponent.CLSID, null, uuid);
 		this._canUse = def.canUse ?? (()=>true);
 		this._onUse = def.onUse;
 	}
 	private _canUse: (this:Item, actor: Creature)=>boolean;
 	private _onUse: (this:Item, actor: Creature)=>void;
 	canUse(actor:Creature):boolean {
-		return this._canUse.call(this.item, actor);
+		return this._canUse.call(this.parentEntity, actor);
 	}
 	use(actor:Creature):void {
-		this._onUse.call(this.item, actor);
+		this._onUse.call(this.parentEntity, actor);
 	}
 }
 export class Item extends GameObject {
@@ -86,18 +93,18 @@ export class Item extends GameObject {
 			fg: blueprint.color ?? Colors.LIGHTGRAY,
 			stroke: ItemRarityToColor[this.rarity]
 		};
-		this.weapon = blueprint.weapon ? new WeaponComponent(this, blueprint.weapon) : null;
-		this.armor = blueprint.armor ? new ArmorComponent(this, blueprint.armor) : null;
-		this.usable = blueprint.usable ? new UsableComponent(this, blueprint.usable) : null;
+		if (blueprint.weapon) new WeaponComponent(blueprint.weapon).addTo(this);
+		if (blueprint.armor) new ArmorComponent(blueprint.armor).addTo(this);
+		if (blueprint.usable) new UsableComponent(blueprint.usable).addTo(this);
 	}
 
 	rarity: ItemRarity;
 	name: string;
 	glyph: GlyphData;
 
-	weapon: WeaponComponent|null;
-	armor: ArmorComponent|null;
-	usable: UsableComponent|null;
+	get weapon(): WeaponComponent|undefined { return this.findComponent(WeaponComponent) }
+	get armor(): ArmorComponent|undefined { return this.findComponent(ArmorComponent) }
+	get usable(): UsableComponent|undefined { return this.findComponent(UsableComponent) }
 
 	get equipable():boolean {
 		return !!this.weapon || !!this.armor;
@@ -129,7 +136,7 @@ export class DroppedItem extends MapObject {
 		return [[0,this.item]];
 	}
 
-	loadChild(pos: any, child: GameObject) {
+	loadChild(pos: unknown, child: GameObject) {
 		if (pos === 0 && child instanceof Item) {
 			// already passed in the constructor
 			return;
