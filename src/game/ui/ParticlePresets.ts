@@ -171,7 +171,7 @@ export function spawnParticle(
 		az: preset.g*particles.defaultAZ,
 		color: "white"
 	};
-	console.log('spawned ',pd);
+	// console.log('spawned ',pd);
 	switch (presetId) {
 		case "blood":
 			pd.color = Colors.LIGHTRED;
